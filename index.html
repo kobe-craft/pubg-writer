@@ -1,18 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
     >
+
+    <meta name="theme-color" content="#171716">
 
     <title>PUBG Writer — 대필 자동화</title>
-
-    <meta
-        name="description"
-        content="대필 작업을 더 빠르고 간단하게. PUBG Writer"
-    >
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -20,80 +18,87 @@
 <body>
 
 <!-- =====================================================
-     LANDING
+     LANDING PAGE
 ===================================================== -->
 
-<main id="landingPage">
+<div id="landingPage">
 
-    <!-- Header -->
-    <header class="landing-header">
+    <header class="site-header">
 
-        <button class="brand" onclick="showLanding()">
-            <span class="brand-mark">
-                <span></span>
-                <span></span>
+        <button
+            class="brand"
+            onclick="showLanding()"
+            aria-label="PUBG Writer"
+        >
+            <span class="brand-symbol">
+                <i></i>
+                <i></i>
             </span>
 
-            <span class="brand-name">
-                PUBG Writer
-            </span>
+            <span>PUBG Writer</span>
         </button>
 
-        <div class="header-status">
-            <span class="status-dot"></span>
-            <span>대필 자동화</span>
-        </div>
+        <span class="header-pill">
+            <b></b>
+            대필 자동화
+        </span>
 
     </header>
 
 
-    <!-- Hero -->
-    <section class="hero">
+    <main class="hero">
 
-        <div class="hero-content">
+        <div class="hero-inner">
 
             <div class="eyebrow">
-                <span class="eyebrow-line"></span>
                 PUBG WRITER
-                <span class="eyebrow-line"></span>
             </div>
+
 
             <h1>
                 대필을
                 <br>
-                <span class="serif">더 쉽게.</span>
+                <em>더 쉽게.</em>
             </h1>
 
-            <p class="hero-description">
-                반복되는 대필 작업을 간단하게.<br>
-                필요한 내용을 빠르게 작성하고 정리하세요.
+
+            <p>
+                반복되는 대필 작업을 한 곳에서.<br>
+                이미지를 불러오고, 자르고, 정리하세요.
             </p>
 
+
             <button
-                id="startButton"
-                class="start-button"
+                class="cta"
                 onclick="startWriter()"
             >
-                <span>사용해보기</span>
+                사용해보기
 
-                <span class="button-arrow">
+                <span>
                     →
                 </span>
             </button>
 
-            <div class="hero-note">
-                다운로드 없이 바로 사용할 수 있습니다.
-            </div>
+
+            <small>
+                다운로드 없이 브라우저에서 바로 사용할 수 있습니다.
+            </small>
 
         </div>
 
 
-        <!-- Bottom subtle decoration -->
+        <!-- 배경 애니메이션 -->
+
+        <div class="hero-orbit orbit-a"></div>
+
+        <div class="hero-orbit orbit-b"></div>
+
+
         <div class="hero-bottom">
 
-            <div class="scroll-indicator">
-                <span></span>
-            </div>
+            <span class="mouse">
+                <i></i>
+            </span>
 
             <span>
                 WRITE · ORGANIZE · CREATE
@@ -101,45 +106,50 @@
 
         </div>
 
-    </section>
+    </main>
 
-
-    <!-- Ambient background -->
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
-
-</main>
+</div>
 
 
 
 <!-- =====================================================
-     WRITER APP
+     APP PAGE
 ===================================================== -->
 
-<main id="appPage" class="app-page hidden">
+<div id="appPage" class="app-page hidden">
 
-    <header class="app-topbar">
+    <!-- APP HEADER -->
+
+    <header class="app-header">
 
         <button
-            class="app-back"
+            class="back"
             onclick="showLanding()"
             aria-label="처음으로"
         >
-            <span>←</span>
+            ←
         </button>
 
-        <div class="app-title">
-            <span class="app-logo"></span>
+
+        <div class="app-brand">
+
+            <span></span>
+
             PUBG Writer
+
         </div>
 
-        <div class="app-actions">
 
-            <button id="resetBtn" class="top-action">
+        <div class="app-head-actions">
+
+            <button id="resetBtn">
                 초기화
             </button>
 
-            <button id="exportBtn" class="top-action primary">
+            <button
+                id="exportBtn"
+                class="dark-btn"
+            >
                 내보내기
             </button>
 
@@ -148,207 +158,360 @@
     </header>
 
 
-    <!-- Main workspace -->
-    <section class="workspace">
 
-        <div id="canvasHolder" class="canvas-holder">
+    <!-- APP CONTENT -->
 
-            <div id="emptyState" class="empty-state">
-
-                <div class="empty-icon">
-                    +
-                </div>
-
-                <h2>
-                    대필할 이미지를 추가하세요
-                </h2>
-
-                <p>
-                    이미지를 선택하면 대필 작업을 시작할 수 있습니다.
-                </p>
-
-                <label class="upload-button">
-                    이미지 선택
-                    <input
-                        id="fileInput"
-                        type="file"
-                        accept="image/*"
-                        hidden
-                    >
-                </label>
-
-            </div>
-
-            <canvas id="mainCanvas"></canvas>
-
-            <div
-                id="overlayBar"
-                class="overlay-bar"
-            >
-                <button id="selectAllBtn">
-                    전체 선택
-                </button>
-
-                <button id="clearSelBtn">
-                    선택 해제
-                </button>
-
-                <span class="selection-info">
-                    <b id="selCount">0</b>
-                    /
-                    <span id="totalCount">0</span>
-                </span>
-            </div>
-
-        </div>
+    <main class="app-main">
 
 
-        <!-- Crop -->
-        <section class="crop-section">
+        <!-- =================================================
+             IMAGE PREVIEW
+        ================================================= -->
 
-            <div class="section-header">
+        <section class="preview-card">
+
+            <div class="preview-head">
+
                 <div>
-                    <span class="section-label">
-                        CROP
-                    </span>
 
-                    <span id="cropHint">
-                        영역을 선택하세요
-                    </span>
+                    <b id="previewTitle">
+                        모든 칸 잘라내기
+                    </b>
+
+                    <small>
+                        스크린샷을 격자 단위로 빠르게 정리합니다.
+                    </small>
+
                 </div>
+
+
+                <button
+                    id="filePickBtn"
+                    class="blue-btn"
+                >
+                    갤러리에서 이미지 불러오기
+                </button>
+
+
+                <input
+                    id="fileInput"
+                    type="file"
+                    accept="image/*"
+                    hidden
+                >
+
             </div>
 
+
             <div
-                id="cropStrip"
-                class="crop-strip"
-            ></div>
+                id="canvasHolder"
+                class="canvas-wrap"
+            >
+
+                <!-- EMPTY -->
+
+                <div
+                    id="emptyState"
+                    class="empty-state"
+                >
+
+                    <div class="upload-icon">
+                        ＋
+                    </div>
+
+                    <h2>
+                        이미지를 불러오세요
+                    </h2>
+
+                    <p>
+                        스크린샷 한 장으로 바로 시작할 수 있습니다.
+                    </p>
+
+                    <button
+                        class="blue-btn"
+                        id="emptyUpload"
+                    >
+                        이미지 선택
+                    </button>
+
+                </div>
+
+
+                <!-- CANVAS -->
+
+                <canvas id="mainCanvas"></canvas>
+
+
+                <!-- CANVAS TOOLS -->
+
+                <div
+                    id="overlayBar"
+                    class="canvas-tools"
+                >
+
+                    <button id="selectAllBtn">
+                        전체 선택
+                    </button>
+
+                    <button id="clearSelBtn">
+                        선택 해제
+                    </button>
+
+                    <span>
+
+                        <b id="selCount">
+                            0
+                        </b>
+
+                        /
+
+                        <span id="totalCount">
+                            0
+                        </span>
+
+                    </span>
+
+                </div>
+
+            </div>
 
         </section>
 
-    </section>
 
 
+        <!-- =================================================
+             CONTROL PANEL
+        ================================================= -->
 
-    <!-- Bottom navigation -->
-    <nav class="bottom-tabbar">
+        <section class="panel">
 
-        <button
-            class="tab-btn active"
-            data-tab="grid"
-        >
-            <span class="tab-icon">▦</span>
-            <span>그리드</span>
-        </button>
+            <div class="panel-title">
 
-        <button
-            class="tab-btn"
-            data-tab="label"
-        >
-            <span class="tab-icon">T</span>
-            <span>라벨</span>
-        </button>
+                <span>
+                    대필 영역
+                </span>
 
-        <button
-            class="tab-btn"
-            data-tab="template"
-        >
-            <span class="tab-icon">□</span>
-            <span>템플릿</span>
-        </button>
-
-    </nav>
-
-
-
-    <!-- Sheet backdrop -->
-    <div
-        id="sheetBackdrop"
-        class="sheet-backdrop"
-    ></div>
-
-
-    <!-- Bottom Sheet -->
-    <section
-        id="sheet"
-        class="sheet"
-    >
-
-        <div class="sheet-handle"></div>
-
-
-        <!-- GRID -->
-        <div class="sheet-content">
-
-            <div class="control-group">
-
-                <label>
-                    열
-                    <input
-                        id="colsInput"
-                        type="number"
-                        min="1"
-                        max="20"
-                        value="3"
-                    >
-                </label>
-
-                <label>
-                    행
-                    <input
-                        id="rowsInput"
-                        type="number"
-                        min="1"
-                        max="20"
-                        value="3"
-                    >
-                </label>
+                <small>
+                    격자와 위치를 조절하세요.
+                </small>
 
             </div>
 
 
-            <div class="slider-group">
+            <!-- DESKTOP TABS -->
 
-                <label>
-                    가로 오프셋
-                    <input
-                        id="offXSlider"
-                        type="range"
-                        min="-100"
-                        max="100"
-                        value="0"
-                    >
-                </label>
+            <div
+                class="segmented"
+                id="modeTabs"
+            >
 
-                <label>
-                    세로 오프셋
-                    <input
-                        id="offYSlider"
-                        type="range"
-                        min="-100"
-                        max="100"
-                        value="0"
-                    >
-                </label>
-
-            </div>
-
-
-            <!-- Label -->
-            <div class="label-controls">
-
-                <input
-                    id="labelText"
-                    type="text"
-                    placeholder="라벨 입력"
+                <button
+                    class="active"
+                    data-mode="grid"
                 >
+                    그리드
+                </button>
+
+                <button data-mode="label">
+                    라벨
+                </button>
+
+                <button data-mode="template">
+                    템플릿
+                </button>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 GRID
+            ================================================= -->
+
+            <div
+                id="gridPanel"
+                class="mode-panel"
+            >
+
+                <div class="quick-row">
+
+                    <button
+                        class="quick active"
+                        data-grid="3x3"
+                    >
+                        3 × 3
+                    </button>
+
+                    <button
+                        class="quick"
+                        data-grid="4x4"
+                    >
+                        4 × 4
+                    </button>
+
+                    <button
+                        class="quick"
+                        data-grid="5x5"
+                    >
+                        5 × 5
+                    </button>
+
+                    <button
+                        class="quick"
+                        data-grid="2x3"
+                    >
+                        2 × 3
+                    </button>
+
+                </div>
+
+
+                <div class="field-grid">
+
+                    <label>
+
+                        열
+
+                        <input
+                            id="colsInput"
+                            type="number"
+                            min="1"
+                            max="20"
+                            value="3"
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        행
+
+                        <input
+                            id="rowsInput"
+                            type="number"
+                            min="1"
+                            max="20"
+                            value="3"
+                        >
+
+                    </label>
+
+
+                    <label>
+
+                        가로 오프셋
+
+                        <input
+                            id="offXSlider"
+                            type="range"
+                            min="-100"
+                            max="100"
+                            value="0"
+                        >
+
+                        <output id="offXValue">
+                            0
+                        </output>
+
+                    </label>
+
+
+                    <label>
+
+                        세로 오프셋
+
+                        <input
+                            id="offYSlider"
+                            type="range"
+                            min="-100"
+                            max="100"
+                            value="0"
+                        >
+
+                        <output id="offYValue">
+                            0
+                        </output>
+
+                    </label>
+
+                </div>
+
+
+                <div class="hint">
+
+                    격자 위의 칸을 눌러 필요한 영역만 선택할 수 있습니다.
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 LABEL
+            ================================================= -->
+
+            <div
+                id="labelPanel"
+                class="mode-panel hidden"
+            >
+
+                <label class="wide-field">
+
+                    라벨 내용
+
+                    <input
+                        id="labelText"
+                        type="text"
+                        placeholder="예: 1번, 2번, 설명"
+                    >
+
+                </label>
+
 
                 <div
                     id="colorRow"
                     class="color-row"
-                ></div>
+                >
 
-                <label>
-                    글자 크기
+                    <button
+                        data-color="#171716"
+                        class="color active"
+                        style="background:#171716"
+                    ></button>
+
+                    <button
+                        data-color="#ffffff"
+                        class="color"
+                        style="background:#ffffff"
+                    ></button>
+
+                    <button
+                        data-color="#d97745"
+                        class="color"
+                        style="background:#d97745"
+                    ></button>
+
+                    <button
+                        data-color="#2563eb"
+                        class="color"
+                        style="background:#2563eb"
+                    ></button>
+
+                </div>
+
+
+                <label class="range-label">
+
+                    <span>
+                        글자 크기
+                    </span>
+
+                    <output id="fontSizeValue">
+                        24
+                    </output>
+
                     <input
                         id="fontSizeSlider"
                         type="range"
@@ -356,9 +519,11 @@
                         max="72"
                         value="24"
                     >
+
                 </label>
 
-                <label class="toggle-row">
+
+                <label class="toggle">
 
                     <span>
                         외곽선
@@ -367,44 +532,153 @@
                     <input
                         id="outlineToggle"
                         type="checkbox"
+                        checked
                     >
+
+                    <i></i>
 
                 </label>
 
+
                 <button
                     id="applyLabelBtn"
-                    class="apply-button"
+                    class="wide-action"
                 >
-                    라벨 적용
+                    선택 칸에 라벨 적용
                 </button>
 
             </div>
 
 
-            <!-- Template -->
-            <div class="template-controls">
 
-                <input
-                    id="templateName"
-                    type="text"
-                    placeholder="템플릿 이름"
-                >
+            <!-- =================================================
+                 TEMPLATE
+            ================================================= -->
 
-                <button id="saveTemplateBtn">
-                    저장
-                </button>
+            <div
+                id="templatePanel"
+                class="mode-panel hidden"
+            >
 
-                <div id="templateList"></div>
+                <div class="template-create">
+
+                    <input
+                        id="templateName"
+                        placeholder="템플릿 이름"
+                    >
+
+                    <button id="saveTemplateBtn">
+                        저장
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="templateList"
+                    class="template-list"
+                ></div>
 
             </div>
 
-        </div>
-
-    </section>
+        </section>
 
 
 
-</main>
+        <!-- =================================================
+             RESULT
+        ================================================= -->
+
+        <section class="result-panel">
+
+            <div class="result-head">
+
+                <div>
+
+                    <b>
+                        잘린 이미지
+                    </b>
+
+                    <small>
+                        선택한 칸을 개별 이미지로 확인합니다.
+                    </small>
+
+                </div>
+
+
+                <button
+                    id="downloadSelected"
+                    class="soft-btn"
+                >
+                    선택 이미지 저장
+                </button>
+
+            </div>
+
+
+            <div
+                id="cropStrip"
+                class="crop-strip"
+            ></div>
+
+
+            <div
+                id="cropHint"
+                class="crop-hint"
+            >
+                이미지를 불러오면 결과가 여기에 표시됩니다.
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =================================================
+         MOBILE TAB BAR
+    ================================================= -->
+
+    <nav class="mobile-tabs">
+
+        <button
+            class="active"
+            data-mode="grid"
+        >
+
+            <span>
+                ▦
+            </span>
+
+            그리드
+
+        </button>
+
+
+        <button data-mode="label">
+
+            <span>
+                T
+            </span>
+
+            라벨
+
+        </button>
+
+
+        <button data-mode="template">
+
+            <span>
+                □
+            </span>
+
+            템플릿
+
+        </button>
+
+    </nav>
+
+</div>
 
 
 
@@ -413,74 +687,6 @@
 ===================================================== -->
 
 <script src="script.js"></script>
-
-<script>
-/*
-===========================================================
-Landing ↔ Writer transition
-===========================================================
-*/
-
-function startWriter() {
-
-    const landing = document.getElementById("landingPage");
-    const app = document.getElementById("appPage");
-
-    if (!landing || !app) return;
-
-    landing.classList.add("leaving");
-
-    setTimeout(() => {
-
-        landing.classList.add("hidden");
-
-        app.classList.remove("hidden");
-
-        requestAnimationFrame(() => {
-            app.classList.add("visible");
-        });
-
-        window.scrollTo({
-            top: 0,
-            behavior: "instant"
-        });
-
-    }, 450);
-}
-
-
-function showLanding() {
-
-    const landing = document.getElementById("landingPage");
-    const app = document.getElementById("appPage");
-
-    if (!landing || !app) return;
-
-    app.classList.remove("visible");
-
-    setTimeout(() => {
-
-        app.classList.add("hidden");
-
-        landing.classList.remove("hidden");
-        landing.classList.remove("leaving");
-
-        requestAnimationFrame(() => {
-            landing.classList.add("returning");
-        });
-
-        setTimeout(() => {
-            landing.classList.remove("returning");
-        }, 800);
-
-        window.scrollTo({
-            top: 0,
-            behavior: "instant"
-        });
-
-    }, 350);
-}
-</script>
 
 </body>
 </html>
