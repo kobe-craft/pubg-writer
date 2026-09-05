@@ -1,130 +1,518 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>격자 컷 · 라벨 메이커</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+        maximum-scale=1.0, user-scalable=no,
+        viewport-fit=cover">
+
+  <title>PUBG Writer</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="app">
-  <!-- 상단 바 -->
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark"></span>
-      <h1>격자 컷</h1>
-    </div>
-    <div class="topbar-actions">
-      <button class="icon-btn" id="resetBtn" aria-label="초기화">↺</button>
-      <button class="icon-btn primary" id="exportBtn" disabled aria-label="내보내기">⬇</button>
-    </div>
-  </header>
+  <!-- ================================
+       랜딩 페이지
+  ================================= -->
 
-  <!-- 캔버스 영역 -->
-  <main class="canvas-zone">
-    <div class="canvas-holder" id="canvasHolder">
-      <div class="empty-state" id="emptyState">
-        <div class="icon">＋</div>
-        <div class="title">스크린샷을 올려주세요</div>
-        <div class="hint">탭해서 사진 선택 (PNG / JPG)</div>
-      </div>
-      <canvas id="mainCanvas" class="hidden"></canvas>
+  <div id="landingPage" class="landing">
 
-      <!-- 캔버스 위 떠있는 카운트/선택 바 -->
-      <div class="canvas-overlay-bar hidden" id="overlayBar">
-        <button class="chip" id="selectAllBtn">전체</button>
-        <button class="chip" id="clearSelBtn">해제</button>
-        <span class="count"><b id="selCount">0</b>/<span id="totalCount">0</span></span>
-      </div>
-    </div>
+    <header class="landing-header">
 
-    <!-- 잘라낸 항목 스트립 -->
-    <div class="crop-strip-wrap">
-      <div class="crop-strip-header">
-        <h3>잘라낸 항목</h3>
-        <span class="footer-note" id="cropHint">칸을 탭하면 여기 표시돼요</span>
-      </div>
-      <div class="crop-strip" id="cropStrip">
-        <div class="crop-empty">아직 선택한 칸이 없어요</div>
-      </div>
-    </div>
-  </main>
-
-  <!-- 하단 탭바 -->
-  <nav class="tabbar">
-    <button class="tab-btn active" data-tab="grid">
-      <span class="tab-icon">▦</span><span>격자</span>
-    </button>
-    <button class="tab-btn" data-tab="label">
-      <span class="tab-icon">Aa</span><span>라벨</span>
-    </button>
-    <button class="tab-btn" data-tab="template">
-      <span class="tab-icon">☆</span><span>템플릿</span>
-    </button>
-  </nav>
-
-  <!-- 바텀 시트 -->
-  <div class="sheet-backdrop" id="sheetBackdrop"></div>
-  <div class="sheet" id="sheet">
-    <div class="sheet-handle"></div>
-
-    <!-- 격자 설정 패널 -->
-    <div class="sheet-panel" data-panel="grid">
-      <div class="field-row">
-        <div class="field">
-          <label>열 (가로)</label>
-          <input type="number" id="colsInput" min="1" max="30" value="8" inputmode="numeric">
+      <div class="logo">
+        <div class="logo-symbol">
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
-        <div class="field">
-          <label>행 (세로)</label>
-          <input type="number" id="rowsInput" min="1" max="30" value="5" inputmode="numeric">
-        </div>
-      </div>
-      <div class="slider-row">
-        <div class="slider-label"><span>가로 오프셋</span><b id="offXVal">0px</b></div>
-        <input type="range" id="offXSlider" min="0" max="100" value="0">
-      </div>
-      <div class="slider-row">
-        <div class="slider-label"><span>세로 오프셋</span><b id="offYVal">0px</b></div>
-        <input type="range" id="offYSlider" min="0" max="100" value="0">
-      </div>
-    </div>
 
-    <!-- 라벨 설정 패널 -->
-    <div class="sheet-panel hidden" data-panel="label">
-      <div class="field">
-        <label>선택한 칸에 표시할 텍스트</label>
-        <input type="text" id="labelText" placeholder="예: 레전드 · 45,000원">
+        <span>PUBG Writer</span>
       </div>
-      <div class="color-row" id="colorRow"></div>
-      <div class="slider-row">
-        <div class="slider-label"><span>글자 크기</span><b id="fontSizeVal">16px</b></div>
-        <input type="range" id="fontSizeSlider" min="10" max="40" value="16">
-      </div>
-      <label class="toggle-row">
-        <input type="checkbox" id="outlineToggle" checked>
-        <span>검정 테두리로 가독성 높이기</span>
-      </label>
-      <button class="btn-primary full" id="applyLabelBtn">선택한 칸에 적용</button>
-    </div>
 
-    <!-- 템플릿 패널 -->
-    <div class="sheet-panel hidden" data-panel="template">
-      <div class="field-row">
-        <div class="field">
-          <input type="text" id="templateName" placeholder="템플릿 이름">
-        </div>
-        <button class="btn-ghost" id="saveTemplateBtn">저장</button>
+      <div class="header-badge">
+        MOBILE FIRST
       </div>
-      <div class="footer-note">격자 배치와 라벨 스타일만 저장돼요 (이미지 제외)</div>
-      <div class="template-list" id="templateList"></div>
-    </div>
+
+    </header>
+
+
+    <main class="hero">
+
+      <div class="hero-content">
+
+        <div class="eyebrow">
+          PUBG WRITER
+        </div>
+
+        <h1>
+          당신의 이야기를<br>
+          <span>더 쉽게.</span>
+        </h1>
+
+        <p class="hero-description">
+          복잡한 대필도 이제는 간단하게.<br>
+          모바일에서 바로 작성하고 완성하세요.
+        </p>
+
+        <button id="startButton" class="start-button">
+          <span>사용해보기</span>
+          <span class="arrow">→</span>
+        </button>
+
+        <p class="no-download">
+          다운로드 없이 브라우저에서 바로 시작하세요.
+        </p>
+
+      </div>
+
+    </main>
+
+
+    <section class="intro-section">
+
+      <div class="intro-title">
+        <span>시작하기</span>
+      </div>
+
+      <div class="feature-grid">
+
+        <article class="feature-card">
+          <div class="feature-number">01</div>
+
+          <h2>모바일에 최적화</h2>
+
+          <p>
+            휴대폰 화면에 맞춰 설계되어
+            어디서든 편하게 사용할 수 있습니다.
+          </p>
+        </article>
+
+
+        <article class="feature-card">
+          <div class="feature-number">02</div>
+
+          <h2>간편한 작성</h2>
+
+          <p>
+            복잡한 설치 없이 웹에서 바로
+            대필 작업을 시작할 수 있습니다.
+          </p>
+        </article>
+
+
+        <article class="feature-card">
+          <div class="feature-number">03</div>
+
+          <h2>누구나 사용 가능</h2>
+
+          <p>
+            별도의 프로그램 없이
+            누구나 쉽게 이용할 수 있습니다.
+          </p>
+        </article>
+
+      </div>
+
+    </section>
+
+
+    <footer class="landing-footer">
+      <span>PUBG Writer</span>
+      <span>공익을 위해, 누구나 사용할 수 있도록.</span>
+    </footer>
+
   </div>
-</div>
 
-<input type="file" id="fileInput" accept="image/*" class="hidden">
 
-<script src="app.js"></script>
+
+  <!-- ================================
+       기존 대필기계 앱
+  ================================= -->
+
+  <div id="appPage" class="app-page hidden">
+
+    <header class="topbar">
+
+      <div class="brand">
+
+        <button id="backButton" class="back-button">
+          ←
+        </button>
+
+        <span class="brand-mark"></span>
+
+        <h1>격자 컷</h1>
+
+      </div>
+
+      <div class="topbar-actions">
+
+        <button class="icon-btn"
+                id="resetBtn"
+                aria-label="초기화">
+          ↺
+        </button>
+
+        <button class="icon-btn primary"
+                id="exportBtn"
+                disabled
+                aria-label="내보내기">
+          ⬇
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <main class="canvas-zone">
+
+      <div class="canvas-holder" id="canvasHolder">
+
+        <div class="empty-state" id="emptyState">
+
+          <div class="icon">
+            ＋
+          </div>
+
+          <div class="title">
+            스크린샷을 올려주세요
+          </div>
+
+          <div class="hint">
+            탭해서 사진 선택
+          </div>
+
+        </div>
+
+        <canvas id="mainCanvas" class="hidden"></canvas>
+
+
+        <div class="canvas-overlay-bar hidden"
+             id="overlayBar">
+
+          <button class="chip"
+                  id="selectAllBtn">
+            전체
+          </button>
+
+          <button class="chip"
+                  id="clearSelBtn">
+            해제
+          </button>
+
+          <span class="count">
+            <b id="selCount">0</b> /
+            <span id="totalCount">0</span>
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="crop-strip-wrap">
+
+        <div class="crop-strip-header">
+
+          <h3>잘라낸 항목</h3>
+
+          <span class="footer-note"
+                id="cropHint">
+            칸을 탭하면 여기 표시돼요
+          </span>
+
+        </div>
+
+        <div class="crop-strip"
+             id="cropStrip">
+
+          <div class="crop-empty">
+            아직 선택한 칸이 없어요
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+
+    <nav class="tabbar">
+
+      <button class="tab-btn active"
+              data-tab="grid">
+
+        <span class="tab-icon">
+          ▦
+        </span>
+
+        <span>
+          격자
+        </span>
+
+      </button>
+
+
+      <button class="tab-btn"
+              data-tab="label">
+
+        <span class="tab-icon">
+          Aa
+        </span>
+
+        <span>
+          라벨
+        </span>
+
+      </button>
+
+
+      <button class="tab-btn"
+              data-tab="template">
+
+        <span class="tab-icon">
+          ☆
+        </span>
+
+        <span>
+          템플릿
+        </span>
+
+      </button>
+
+    </nav>
+
+
+    <div class="sheet-backdrop"
+         id="sheetBackdrop">
+    </div>
+
+
+    <div class="sheet"
+         id="sheet">
+
+      <div class="sheet-handle"></div>
+
+
+      <!-- 격자 -->
+
+      <div class="sheet-panel"
+           data-panel="grid">
+
+        <div class="field-row">
+
+          <div class="field">
+
+            <label>
+              열 (가로)
+            </label>
+
+            <input type="number"
+                   id="colsInput"
+                   min="1"
+                   max="30"
+                   value="8"
+                   inputmode="numeric">
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              행 (세로)
+            </label>
+
+            <input type="number"
+                   id="rowsInput"
+                   min="1"
+                   max="30"
+                   value="5"
+                   inputmode="numeric">
+
+          </div>
+
+        </div>
+
+
+        <div class="slider-row">
+
+          <div class="slider-label">
+
+            <span>
+              가로 오프셋
+            </span>
+
+            <b id="offXVal">
+              0px
+            </b>
+
+          </div>
+
+          <input type="range"
+                 id="offXSlider"
+                 min="0"
+                 max="100"
+                 value="0">
+
+        </div>
+
+
+        <div class="slider-row">
+
+          <div class="slider-label">
+
+            <span>
+              세로 오프셋
+            </span>
+
+            <b id="offYVal">
+              0px
+            </b>
+
+          </div>
+
+          <input type="range"
+                 id="offYSlider"
+                 min="0"
+                 max="100"
+                 value="0">
+
+        </div>
+
+      </div>
+
+
+      <!-- 라벨 -->
+
+      <div class="sheet-panel hidden"
+           data-panel="label">
+
+        <div class="field">
+
+          <label>
+            선택한 칸에 표시할 텍스트
+          </label>
+
+          <input type="text"
+                 id="labelText"
+                 placeholder="예: 레전드 · 45,000원">
+
+        </div>
+
+
+        <div class="color-row"
+             id="colorRow">
+        </div>
+
+
+        <div class="slider-row">
+
+          <div class="slider-label">
+
+            <span>
+              글자 크기
+            </span>
+
+            <b id="fontSizeVal">
+              16px
+            </b>
+
+          </div>
+
+          <input type="range"
+                 id="fontSizeSlider"
+                 min="10"
+                 max="40"
+                 value="16">
+
+        </div>
+
+
+        <label class="toggle-row">
+
+          <input type="checkbox"
+                 id="outlineToggle"
+                 checked>
+
+          <span>
+            검정 테두리로 가독성 높이기
+          </span>
+
+        </label>
+
+
+        <button class="btn-primary full"
+                id="applyLabelBtn">
+
+          선택한 칸에 적용
+
+        </button>
+
+      </div>
+
+
+      <!-- 템플릿 -->
+
+      <div class="sheet-panel hidden"
+           data-panel="template">
+
+        <div class="field-row">
+
+          <div class="field">
+
+            <input type="text"
+                   id="templateName"
+                   placeholder="템플릿 이름">
+
+          </div>
+
+          <button class="btn-ghost"
+                  id="saveTemplateBtn">
+
+            저장
+
+          </button>
+
+        </div>
+
+
+        <div class="footer-note">
+
+          격자 배치와 라벨 스타일만 저장돼요
+          (이미지 제외)
+
+        </div>
+
+
+        <div class="template-list"
+             id="templateList">
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <input type="file"
+         id="fileInput"
+         accept="image/*"
+         class="hidden">
+
+
+  <script src="script.js"></script>
+
 </body>
 </html>
