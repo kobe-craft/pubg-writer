@@ -4,173 +4,315 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f4ef">
+
   <title>Iris — PUBG Writer</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap"
+    rel="stylesheet"
+  >
 
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- =========================
+  <!-- ==================================================
        INTRO
-  ========================== -->
+  =================================================== -->
+
   <section id="landing" class="landing">
 
     <header class="landing-header">
-      <button class="brand brand-button" id="brandHome">
+
+      <button
+        class="brand brand-button"
+        id="brandHome"
+        type="button"
+        aria-label="Iris 홈"
+      >
+
         <span class="brand-mark">
           <i></i>
           <i></i>
           <i></i>
         </span>
 
-        <span class="brand-name">Apex</span>
+        <span class="brand-name">Iris</span>
+
       </button>
 
       <span class="version">Vesper1.0</span>
+
     </header>
+
 
     <main class="hero">
 
-      <div class="hero-label">PUBG WRITER</div>
+      <div class="hero-label">
+        PUBG WRITER
+      </div>
+
 
       <h1>
         대필을<br>
         <em>더 쉽게.</em>
       </h1>
 
+
       <p class="hero-description">
         게임 화면을 올리고 필요한 칸을 선택하세요.<br>
         자르고, 정리하고, 대필까지 한 곳에서.
       </p>
 
-      <button id="startBtn" class="start-card">
-        <span class="start-card-small">PUBG WRITER</span>
+
+      <button
+        id="startBtn"
+        class="start-card"
+        type="button"
+      >
+
+        <span class="start-card-small">
+          PUBG WRITER
+        </span>
 
         <span class="start-card-title">
           대필 해보기
         </span>
 
-        <span class="start-card-arrow">↗</span>
+        <span class="start-card-arrow">
+          ↗
+        </span>
 
         <span class="start-card-line"></span>
 
         <span class="start-card-bottom">
           이미지 업로드부터 내보내기까지
         </span>
+
       </button>
 
     </main>
 
+
     <footer class="landing-footer">
+
       <span>Iris</span>
-      <span>WRITE · ORGANIZE · CREATE</span>
+
+      <span>
+        WRITE · ORGANIZE · CREATE
+      </span>
+
     </footer>
 
   </section>
 
 
-  <!-- =========================
+
+  <!-- ==================================================
        APP
-  ========================== -->
+  =================================================== -->
+
   <section id="app" class="app hidden">
 
-    <!-- Sidebar -->
+    <!-- SIDEBAR -->
+
     <aside id="sidebar" class="sidebar">
 
       <div class="sidebar-top">
 
-        <button class="side-brand" id="sideBrand">
+        <button
+          class="side-brand"
+          id="sideBrand"
+          type="button"
+        >
+
           <span class="brand-mark small">
             <i></i>
             <i></i>
             <i></i>
           </span>
+
           <span>Iris</span>
-          <small>Vesper</small>
+
+          <small>
+            Vesper1.0
+          </small>
+
         </button>
 
-        <button id="newProjectBtn" class="new-project">
+
+        <button
+          id="newProjectBtn"
+          class="new-project"
+          type="button"
+        >
+
           <span>＋</span>
+
           새 프로젝트
+
         </button>
 
       </div>
+
 
       <div class="sidebar-section">
 
-        <div class="sidebar-title">프로젝트</div>
+        <div class="sidebar-title">
+          프로젝트
+        </div>
 
-        <button class="project-item active">
+
+        <button
+          class="project-item active"
+          type="button"
+        >
+
           <span class="project-dot"></span>
+
           <span>
-            <strong id="sidebarProjectName">새 대필 작업</strong>
-            <small>현재 작업</small>
+
+            <strong id="sidebarProjectName">
+              새 대필 작업
+            </strong>
+
+            <small>
+              현재 작업
+            </small>
+
           </span>
+
         </button>
 
       </div>
+
 
       <div class="sidebar-section sidebar-menu">
 
-        <button id="helpBtn">
+        <button
+          id="helpBtn"
+          type="button"
+        >
+
           <span>?</span>
+
           도움말
+
         </button>
 
-        <button id="settingsBtn">
+
+        <button
+          id="settingsBtn"
+          type="button"
+        >
+
           <span>⚙</span>
+
           설정
+
         </button>
 
       </div>
 
-      <div class="account">
-        <div class="account-avatar">A</div>
 
-        <div>
-          <strong>Iris</strong>
-          <small>PUBG Writer</small>
+      <div class="account">
+
+        <div class="account-avatar">
+          I
         </div>
 
-        <span class="account-more">•••</span>
+
+        <div>
+
+          <strong>
+            Iris
+          </strong>
+
+          <small>
+            PUBG Writer
+          </small>
+
+        </div>
+
+
+        <span class="account-more">
+          •••
+        </span>
+
       </div>
 
     </aside>
 
 
-    <!-- Main -->
+
+    <!-- MAIN -->
+
     <main class="main">
 
       <header class="topbar">
 
-        <button id="mobileMenuBtn" class="mobile-menu">
+        <button
+          id="mobileMenuBtn"
+          class="mobile-menu"
+          type="button"
+          aria-label="메뉴"
+        >
           ☰
         </button>
 
+
         <div class="breadcrumbs">
-          <span>프로젝트</span>
-          <b>/</b>
-          <strong>대필 작업</strong>
+
+          <span>
+            프로젝트
+          </span>
+
+          <b>
+            /
+          </b>
+
+          <strong>
+            대필 작업
+          </strong>
+
         </div>
+
 
         <div class="top-actions">
 
-          <span id="saveStatus" class="save-status">
+          <span
+            id="saveStatus"
+            class="save-status"
+          >
             저장됨
           </span>
 
-          <button id="resetBtn" class="ghost-btn">
+
+          <button
+            id="resetBtn"
+            class="ghost-btn"
+            type="button"
+          >
             초기화
           </button>
 
-          <button id="exportBtn" class="export-btn">
+
+          <button
+            id="exportBtn"
+            class="export-btn"
+            type="button"
+          >
+
             내보내기
-            <span>↓</span>
+
+            <span>
+              ↓
+            </span>
+
           </button>
 
         </div>
@@ -178,156 +320,325 @@
       </header>
 
 
+
+      <!-- WORKSPACE -->
+
       <div class="workspace">
 
-        <!-- Editor -->
+
+        <!-- EDITOR -->
+
         <section class="editor">
 
           <div class="editor-heading">
 
             <div>
-              <span class="eyebrow">WRITING WORKSPACE</span>
 
-              <h2>대필 작업</h2>
+              <span class="eyebrow">
+                WRITING WORKSPACE
+              </span>
+
+
+              <h2>
+                대필 작업
+              </h2>
+
 
               <p>
                 이미지를 업로드하고 원하는 영역을 선택하세요.
               </p>
+
             </div>
 
-            <button id="uploadTopBtn" class="upload-top">
+
+            <button
+              id="uploadTopBtn"
+              class="upload-top"
+              type="button"
+            >
               이미지 업로드
             </button>
 
           </div>
 
 
-          <!-- Upload / Canvas -->
-          <div id="canvasHolder" class="canvas-holder">
 
-            <div id="emptyState" class="empty-state">
+          <!-- CANVAS -->
 
-              <div class="upload-icon">＋</div>
+          <div
+            id="canvasHolder"
+            class="canvas-holder"
+          >
 
-              <h3>이미지를 올려주세요</h3>
+            <div
+              id="emptyState"
+              class="empty-state"
+            >
+
+              <div class="upload-icon">
+                ＋
+              </div>
+
+
+              <h3>
+                이미지를 올려주세요
+              </h3>
+
 
               <p>
                 PUBG 스크린샷을 이곳에 끌어놓거나<br>
                 아래 버튼을 눌러 선택하세요.
               </p>
 
-              <button id="emptyUploadBtn" class="empty-upload">
+
+              <button
+                id="emptyUploadBtn"
+                class="empty-upload"
+                type="button"
+              >
                 갤러리에서 이미지 불러오기
               </button>
 
             </div>
 
+
             <canvas id="mainCanvas"></canvas>
 
-            <div id="overlayBar" class="overlay-bar hidden">
+
+            <div
+              id="overlayBar"
+              class="overlay-bar hidden"
+            >
+
               <span>
                 선택된 칸
-                <strong id="selCount">0</strong>
+
+                <strong id="selCount">
+                  0
+                </strong>
               </span>
 
-              <button id="selectAllBtn">
+
+              <button
+                id="selectAllBtn"
+                type="button"
+              >
                 전체 선택
               </button>
 
-              <button id="clearSelBtn">
+
+              <button
+                id="clearSelBtn"
+                type="button"
+              >
                 선택 해제
               </button>
+
             </div>
 
           </div>
 
 
-          <!-- Quick grid -->
+
+          <!-- QUICK GRID -->
+
           <div class="quick-grid">
 
-            <span>빠른 격자</span>
+            <span>
+              빠른 격자
+            </span>
 
-            <button data-grid="3x3">3 × 3</button>
-            <button data-grid="4x4">4 × 4</button>
-            <button data-grid="5x5">5 × 5</button>
-            <button data-grid="2x3">2 × 3</button>
+
+            <button
+              type="button"
+              data-grid="3x3"
+            >
+              3 × 3
+            </button>
+
+
+            <button
+              type="button"
+              data-grid="4x4"
+            >
+              4 × 4
+            </button>
+
+
+            <button
+              type="button"
+              data-grid="5x5"
+            >
+              5 × 5
+            </button>
+
+
+            <button
+              type="button"
+              data-grid="2x3"
+            >
+              2 × 3
+            </button>
 
           </div>
 
 
-          <!-- Result -->
+
+          <!-- RESULT -->
+
           <div class="result-section">
 
             <div class="section-heading">
+
               <div>
-                <span class="eyebrow">RESULT</span>
-                <h3>잘라낸 이미지</h3>
+
+                <span class="eyebrow">
+                  RESULT
+                </span>
+
+                <h3>
+                  잘라낸 이미지
+                </h3>
+
               </div>
 
-              <span id="totalCount">0개</span>
+
+              <span id="totalCount">
+                0개
+              </span>
+
             </div>
 
-            <p id="cropHint" class="crop-hint">
+
+            <p
+              id="cropHint"
+              class="crop-hint"
+            >
               격자에서 칸을 선택하면 결과가 표시됩니다.
             </p>
 
-            <div id="cropStrip" class="crop-strip">
-            </div>
+
+            <div
+              id="cropStrip"
+              class="crop-strip"
+            ></div>
 
           </div>
 
         </section>
 
 
-        <!-- Settings -->
+
+        <!-- SETTINGS -->
+
         <aside class="settings">
+
 
           <div class="settings-tabs">
 
-            <button class="tab active" data-tab="grid">
+            <button
+              class="tab active"
+              data-tab="grid"
+              type="button"
+            >
               그리드
             </button>
 
-            <button class="tab" data-tab="label">
+
+            <button
+              class="tab"
+              data-tab="label"
+              type="button"
+            >
               라벨
             </button>
 
-            <button class="tab" data-tab="template">
+
+            <button
+              class="tab"
+              data-tab="template"
+              type="button"
+            >
               템플릿
             </button>
 
           </div>
 
 
-          <!-- Grid -->
-          <div id="tab-grid" class="tab-content active">
+
+          <!-- GRID TAB -->
+
+          <div
+            id="tab-grid"
+            class="tab-content active"
+          >
 
             <div class="setting-heading">
-              <span>GRID</span>
-              <h3>격자 설정</h3>
+
+              <span>
+                GRID
+              </span>
+
+              <h3>
+                격자 설정
+              </h3>
+
             </div>
+
 
             <div class="field-row">
 
               <label>
-                <span>열</span>
-                <input id="colsInput" type="number" min="1" max="10" value="3">
+
+                <span>
+                  열
+                </span>
+
+                <input
+                  id="colsInput"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value="3"
+                >
+
               </label>
 
+
               <label>
-                <span>행</span>
-                <input id="rowsInput" type="number" min="1" max="10" value="3">
+
+                <span>
+                  행
+                </span>
+
+                <input
+                  id="rowsInput"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value="3"
+                >
+
               </label>
 
             </div>
+
 
 
             <div class="setting-block">
 
               <div class="range-label">
-                <span>가로 오프셋</span>
-                <strong id="offXValue">0</strong>
+
+                <span>
+                  가로 오프셋
+                </span>
+
+                <strong id="offXValue">
+                  0
+                </strong>
+
               </div>
+
 
               <input
                 id="offXSlider"
@@ -340,12 +651,21 @@
             </div>
 
 
+
             <div class="setting-block">
 
               <div class="range-label">
-                <span>세로 오프셋</span>
-                <strong id="offYValue">0</strong>
+
+                <span>
+                  세로 오프셋
+                </span>
+
+                <strong id="offYValue">
+                  0
+                </strong>
+
               </div>
+
 
               <input
                 id="offYSlider"
@@ -358,27 +678,49 @@
             </div>
 
 
+
             <div class="info-box">
-              <strong>사용 방법</strong>
+
+              <strong>
+                사용 방법
+              </strong>
+
               <p>
                 이미지 위의 칸을 클릭하면 선택됩니다.
                 여러 칸을 동시에 선택할 수 있습니다.
               </p>
+
             </div>
 
           </div>
 
 
-          <!-- Label -->
-          <div id="tab-label" class="tab-content">
+
+          <!-- LABEL TAB -->
+
+          <div
+            id="tab-label"
+            class="tab-content"
+          >
 
             <div class="setting-heading">
-              <span>LABEL</span>
-              <h3>라벨 설정</h3>
+
+              <span>
+                LABEL
+              </span>
+
+              <h3>
+                라벨 설정
+              </h3>
+
             </div>
 
+
             <label class="full-field">
-              <span>라벨 텍스트</span>
+
+              <span>
+                라벨 텍스트
+              </span>
 
               <input
                 id="labelText"
@@ -386,31 +728,74 @@
                 placeholder="예: 01"
                 maxlength="30"
               >
+
             </label>
+
 
 
             <div class="setting-block">
 
-              <span class="field-caption">색상</span>
+              <span class="field-caption">
+                색상
+              </span>
 
-              <div class="color-row" id="colorRow">
 
-                <button class="color active" data-color="#171716"></button>
-                <button class="color" data-color="#ffffff"></button>
-                <button class="color" data-color="#d9774e"></button>
-                <button class="color" data-color="#3d69d9"></button>
+              <div
+                class="color-row"
+                id="colorRow"
+              >
+
+                <button
+                  class="color active"
+                  data-color="#171716"
+                  type="button"
+                  aria-label="검정"
+                ></button>
+
+
+                <button
+                  class="color"
+                  data-color="#ffffff"
+                  type="button"
+                  aria-label="흰색"
+                ></button>
+
+
+                <button
+                  class="color"
+                  data-color="#d9774e"
+                  type="button"
+                  aria-label="주황"
+                ></button>
+
+
+                <button
+                  class="color"
+                  data-color="#3d69d9"
+                  type="button"
+                  aria-label="파랑"
+                ></button>
 
               </div>
 
             </div>
 
 
+
             <div class="setting-block">
 
               <div class="range-label">
-                <span>글자 크기</span>
-                <strong id="fontSizeValue">24px</strong>
+
+                <span>
+                  글자 크기
+                </span>
+
+                <strong id="fontSizeValue">
+                  24px
+                </strong>
+
               </div>
+
 
               <input
                 id="fontSizeSlider"
@@ -423,37 +808,71 @@
             </div>
 
 
+
             <label class="toggle-row">
 
               <span>
-                <strong>외곽선</strong>
-                <small>이미지 위에서 더 잘 보이게 합니다.</small>
+
+                <strong>
+                  외곽선
+                </strong>
+
+                <small>
+                  이미지 위에서 더 잘 보이게 합니다.
+                </small>
+
               </span>
 
-              <input id="outlineToggle" type="checkbox" checked>
+
+              <input
+                id="outlineToggle"
+                type="checkbox"
+                checked
+              >
 
               <i></i>
 
             </label>
 
 
-            <button id="applyLabelBtn" class="primary-wide">
+
+            <button
+              id="applyLabelBtn"
+              class="primary-wide"
+              type="button"
+            >
               선택한 칸에 적용
             </button>
 
           </div>
 
 
-          <!-- Template -->
-          <div id="tab-template" class="tab-content">
+
+          <!-- TEMPLATE TAB -->
+
+          <div
+            id="tab-template"
+            class="tab-content"
+          >
 
             <div class="setting-heading">
-              <span>TEMPLATE</span>
-              <h3>템플릿</h3>
+
+              <span>
+                TEMPLATE
+              </span>
+
+              <h3>
+                템플릿
+              </h3>
+
             </div>
 
+
             <label class="full-field">
-              <span>템플릿 이름</span>
+
+              <span>
+                템플릿 이름
+              </span>
 
               <input
                 id="templateName"
@@ -461,14 +880,23 @@
                 placeholder="새 템플릿"
                 maxlength="30"
               >
+
             </label>
 
-            <button id="saveTemplateBtn" class="primary-wide">
+
+            <button
+              id="saveTemplateBtn"
+              class="primary-wide"
+              type="button"
+            >
               템플릿 저장
             </button>
 
-            <div id="templateList" class="template-list">
-            </div>
+
+            <div
+              id="templateList"
+              class="template-list"
+            ></div>
 
           </div>
 
@@ -479,20 +907,33 @@
     </main>
 
 
-    <!-- Mobile bottom -->
+
+    <!-- MOBILE NAV -->
+
     <nav class="mobile-nav">
 
-      <button class="active">
+      <button
+        class="active"
+        type="button"
+      >
         <span>⌂</span>
         작업
       </button>
 
-      <button id="mobileNewProject">
+
+      <button
+        id="mobileNewProject"
+        type="button"
+      >
         <span>＋</span>
         새 작업
       </button>
 
-      <button id="mobileExport">
+
+      <button
+        id="mobileExport"
+        type="button"
+      >
         <span>↓</span>
         저장
       </button>
@@ -502,13 +943,16 @@
   </section>
 
 
-  <!-- Hidden input -->
+
+  <!-- FILE INPUT -->
+
   <input
     id="fileInput"
     type="file"
     accept="image/*"
     hidden
   >
+
 
   <script src="script.js"></script>
 
