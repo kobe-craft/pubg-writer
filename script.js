@@ -1,2519 +1,1327 @@
-"use strict";
-
-/*
- * =====================================================
- * Iris — PUBG Writer
- * Vesper1.0
- * =====================================================
- */
-
-
-/* =====================================================
-   HELPERS
-===================================================== */
-
-const $ = (selector) => document.querySelector(selector);
-
-const $$ = (selector) =>
-  document.querySelectorAll(selector);
-
-
-function clamp(value, min, max) {
-  return Math.min(
-    max,
-    Math.max(min, value)
-  );
-}
-
-
-/* =====================================================
-   STATE
-===================================================== */
-
-const state = {
-
-  image: null,
-
-  cols: 3,
-  rows: 3,
-
-  offX: 0,
-  offY: 0,
-
-  cells: [],
-
-  selected: new Set(),
-
-  labels: new Map(),
-
-  labelColor: "#171716",
-
-  labelSize: 24,
-
-  outline: true,
-
-  templates: [],
-
-  workName: "새 대필 작업"
-
-};
-
-
-/* =====================================================
-   DOM
-===================================================== */
-
-const landing =
-  $("#landing");
-
-const app =
-  $("#app");
-
-const startBtn =
-  $("#startBtn");
-
-const brandHome =
-  $("#brandHome");
-
-const sideBrand =
-  $("#sideBrand");
-
-const fileInput =
-  $("#fileInput");
-
-const emptyState =
-  $("#emptyState");
-
-const emptyUploadBtn =
-  $("#emptyUploadBtn");
-
-const uploadTopBtn =
-  $("#uploadTopBtn");
-
-const canvasHolder =
-  $("#canvasHolder");
-
-const canvas =
-  $("#mainCanvas");
-
-const overlayBar =
-  $("#overlayBar");
-
-const selectAllBtn =
-  $("#selectAllBtn");
-
-const clearSelBtn =
-  $("#clearSelBtn");
-
-const selCount =
-  $("#selCount");
-
-const totalCount =
-  $("#totalCount");
-
-const cropHint =
-  $("#cropHint");
-
-const cropStrip =
-  $("#cropStrip");
-
-const colsInput =
-  $("#colsInput");
-
-const rowsInput =
-  $("#rowsInput");
-
-const offXSlider =
-  $("#offXSlider");
-
-const offYSlider =
-  $("#offYSlider");
-
-const offXValue =
-  $("#offXValue");
-
-const offYValue =
-  $("#offYValue");
-
-const labelText =
-  $("#labelText");
-
-const fontSizeSlider =
-  $("#fontSizeSlider");
-
-const fontSizeValue =
-  $("#fontSizeValue");
-
-const outlineToggle =
-  $("#outlineToggle");
-
-const applyLabelBtn =
-  $("#applyLabelBtn");
-
-const templateName =
-  $("#templateName");
-
-const saveTemplateBtn =
-  $("#saveTemplateBtn");
-
-const templateList =
-  $("#templateList");
-
-const resetBtn =
-  $("#resetBtn");
-
-const exportBtn =
-  $("#exportBtn");
-
-const newProjectBtn =
-  $("#newProjectBtn");
-
-const mobileNewProject =
-  $("#mobileNewProject");
-
-const mobileExport =
-  $("#mobileExport");
-
-const mobileMenuBtn =
-  $("#mobileMenuBtn");
-
-const sidebar =
-  $("#sidebar");
-
-const saveStatus =
-  $("#saveStatus");
-
-const sidebarProjectName =
-  $("#sidebarProjectName");
-
-
-/* =====================================================
-   LANDING
-===================================================== */
-
-function startWriter() {
-
-  landing.classList.add("hidden");
-
-  app.classList.remove("hidden");
-
-  window.scrollTo(0, 0);
-
-}
-
-
-startBtn.addEventListener(
-  "click",
-  startWriter
-);
-
-
-brandHome.addEventListener(
-  "click",
-  () => {
-
-    app.classList.add("hidden");
-
-    landing.classList.remove("hidden");
-
+// script.js
+// Iris — PUBG Writer
+// 자유 크롭 + 반복 크롭 + 대필판 업로드 + 자유 배치 + 텍스트 + PNG
+
+(() => {
+  "use strict";
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => [...document.querySelectorAll(s)];
+
+  const state = {
+    image: null,
+    crop: null,
+    cropNorm: null,
+    pieces: [],
+    templates: [],
+    selectedTemplate: null,
+    objects: [],
+    selectedObject: null,
+    textColor: "#171716",
+    fontSize: 24,
+    outline: true,
+    draggingCrop: false,
+    draggingObject: false,
+    cropStart: null,
+    objectOffset: null
+  };
+
+  const fileInput = $("#fileInput");
+  const canvas = $("#mainCanvas");
+  const ctx = canvas?.getContext("2d");
+
+  const cropStrip = $("#cropStrip");
+  const emptyState = $("#emptyState");
+  const overlayBar = $("#overlayBar");
+
+  function makeId() {
+    return crypto.randomUUID?.() ||
+      Math.random().toString(36).slice(2) +
+      Date.now().toString(36);
   }
-);
 
-
-sideBrand.addEventListener(
-  "click",
-  () => {
-
-    app.classList.add("hidden");
-
-    landing.classList.remove("hidden");
-
+  function setStatus(text) {
+    const el = $("#saveStatus");
+    if (el) el.textContent = text;
   }
-);
 
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
 
-/* =====================================================
-   FILE PICKER
-===================================================== */
+      reader.onload = () => {
+        const img = new Image();
 
-function openFilePicker() {
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = reader.result;
+      };
 
-  fileInput.click();
-
-}
-
-
-emptyUploadBtn.addEventListener(
-  "click",
-  openFilePicker
-);
-
-
-uploadTopBtn.addEventListener(
-  "click",
-  openFilePicker
-);
-
-
-fileInput.addEventListener(
-  "change",
-  () => {
-
-    const file =
-      fileInput.files &&
-      fileInput.files[0];
-
-    if (!file) {
-      return;
-    }
-
-    loadImage(file);
-
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
-);
 
+  function fitCanvas() {
+    if (!canvas || !state.image) return;
 
-/* =====================================================
-   LOAD IMAGE
-===================================================== */
+    const holder = $("#canvasHolder");
+    const maxW = holder.clientWidth || 900;
+    const maxH = Math.min(window.innerHeight * 0.65, 650);
 
-function loadImage(file) {
-
-  if (!file.type.startsWith("image/")) {
-
-    alert(
-      "이미지 파일만 사용할 수 있습니다."
+    const ratio = Math.min(
+      maxW / state.image.naturalWidth,
+      maxH / state.image.naturalHeight
     );
 
-    return;
-  }
-
-
-  const reader =
-    new FileReader();
-
-
-  reader.onload =
-    (event) => {
-
-      const img =
-        new Image();
-
-
-      img.onload =
-        () => {
-
-          state.image =
-            img;
-
-          state.selected.clear();
-
-          state.labels.clear();
-
-
-          emptyState.classList.add(
-            "hidden"
-          );
-
-          overlayBar.classList.remove(
-            "hidden"
-          );
-
-
-          buildGrid();
-
-          setStatus(
-            "이미지 불러옴"
-          );
-
-        };
-
-
-      img.onerror =
-        () => {
-
-          alert(
-            "이미지를 불러오지 못했습니다."
-          );
-
-        };
-
-
-      img.src =
-        event.target.result;
-
-    };
-
-
-  reader.onerror =
-    () => {
-
-      alert(
-        "파일을 읽지 못했습니다."
-      );
-
-    };
-
-
-  reader.readAsDataURL(file);
-
-}
-
-
-/* =====================================================
-   DRAG & DROP
-===================================================== */
-
-canvasHolder.addEventListener(
-  "dragover",
-  (event) => {
-
-    event.preventDefault();
-
-    canvasHolder.classList.add(
-      "dragging"
-    );
-
-  }
-);
-
-
-canvasHolder.addEventListener(
-  "dragleave",
-  () => {
-
-    canvasHolder.classList.remove(
-      "dragging"
-    );
-
-  }
-);
-
-
-canvasHolder.addEventListener(
-  "drop",
-  (event) => {
-
-    event.preventDefault();
-
-    canvasHolder.classList.remove(
-      "dragging"
-    );
-
-
-    const file =
-      event.dataTransfer.files &&
-      event.dataTransfer.files[0];
-
-
-    if (file) {
-      loadImage(file);
-    }
-
-  }
-);
-
-
-/* =====================================================
-   BUILD GRID
-===================================================== */
-
-function buildGrid() {
-
-  state.cells = [];
-
-
-  if (!state.image) {
-    return;
-  }
-
-
-  const width =
-    state.image.naturalWidth ||
-    state.image.width;
-
-
-  const height =
-    state.image.naturalHeight ||
-    state.image.height;
-
-
-  const cellWidth =
-    width / state.cols;
-
-
-  const cellHeight =
-    height / state.rows;
-
-
-  let index = 0;
-
-
-  for (
-    let row = 0;
-    row < state.rows;
-    row++
-  ) {
-
-    for (
-      let col = 0;
-      col < state.cols;
-      col++
-    ) {
-
-      state.cells.push({
-
-        index,
-
-        row,
-
-        col,
-
-        x:
-          col * cellWidth,
-
-        y:
-          row * cellHeight,
-
-        width:
-          cellWidth,
-
-        height:
-          cellHeight
-
-      });
-
-
-      index++;
-
-    }
-
-  }
-
-
-  state.selected =
-    new Set(
-      [...state.selected]
-        .filter(
-          (index) =>
-            index >= 0 &&
-            index < state.cells.length
-        )
-    );
-
-
-  resizeCanvas();
-
-  updateUI();
-
-}
-
-
-/* =====================================================
-   RESIZE CANVAS
-===================================================== */
-
-function resizeCanvas() {
-
-  if (!state.image) {
-    return;
-  }
-
-
-  const maxWidth =
-    Math.max(
-      280,
-      canvasHolder.clientWidth - 30
-    );
-
-
-  const maxHeight =
-    620;
-
-
-  const imageWidth =
-    state.image.naturalWidth ||
-    state.image.width;
-
-
-  const imageHeight =
-    state.image.naturalHeight ||
-    state.image.height;
-
-
-  const ratio =
-    Math.min(
-      maxWidth / imageWidth,
-      maxHeight / imageHeight,
-      1
-    );
-
-
-  canvas.width =
-    imageWidth;
-
-
-  canvas.height =
-    imageHeight;
-
-
-  canvas.style.width =
-    `${Math.round(
-      imageWidth * ratio
-    )}px`;
-
-
-  canvas.style.height =
-    `${Math.round(
-      imageHeight * ratio
-    )}px`;
-
-
-  drawCanvas();
-
-}
-
-
-window.addEventListener(
-  "resize",
-  resizeCanvas
-);
-
-
-/* =====================================================
-   DRAW CANVAS
-===================================================== */
-
-function drawCanvas() {
-
-  if (!state.image) {
-    return;
-  }
-
-
-  const ctx =
-    canvas.getContext("2d");
-
-
-  const width =
-    canvas.width;
-
-
-  const height =
-    canvas.height;
-
-
-  ctx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  ctx.drawImage(
-    state.image,
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  /*
-   * Selected cells
-   */
-
-  state.cells.forEach(
-    (cell) => {
-
-      if (
-        !state.selected.has(
-          cell.index
-        )
-      ) {
-        return;
-      }
-
-
-      ctx.fillStyle =
-        "rgba(217,121,80,.20)";
-
-
-      ctx.fillRect(
-        cell.x,
-        cell.y,
-        cell.width,
-        cell.height
-      );
-
-
-      ctx.strokeStyle =
-        "#d97950";
-
-
-      ctx.lineWidth =
-        Math.max(
-          3,
-          width / 500
-        );
-
-
-      ctx.strokeRect(
-        cell.x,
-        cell.y,
-        cell.width,
-        cell.height
-      );
-
-    }
-  );
-
-
-  /*
-   * Grid
-   */
-
-  ctx.strokeStyle =
-    "rgba(255,255,255,.9)";
-
-
-  ctx.lineWidth =
-    Math.max(
-      1,
-      width / 900
-    );
-
-
-  state.cells.forEach(
-    (cell) => {
-
-      ctx.strokeRect(
-        cell.x,
-        cell.y,
-        cell.width,
-        cell.height
-      );
-
-    }
-  );
-
-
-  /*
-   * Cell numbers
-   */
-
-  const numberSize =
-    Math.max(
-      12,
-      Math.min(
-        width,
-        height
-      ) / 35
-    );
-
-
-  ctx.font =
-    `600 ${numberSize}px DM Sans`;
-
-
-  ctx.textAlign =
-    "center";
-
-
-  ctx.textBaseline =
-    "middle";
-
-
-  state.cells.forEach(
-    (cell) => {
-
-      const cx =
-        cell.x +
-        cell.width / 2;
-
-
-      const cy =
-        cell.y +
-        cell.height / 2;
-
-
-      ctx.fillStyle =
-        "rgba(20,19,18,.75)";
-
-
-      ctx.beginPath();
-
-
-      ctx.arc(
-        cx,
-        cy,
-        numberSize * 0.8,
-        0,
-        Math.PI * 2
-      );
-
-
-      ctx.fill();
-
-
-      ctx.fillStyle =
-        "#fff";
-
-
-      ctx.fillText(
-        String(cell.index + 1),
-        cx,
-        cy
-      );
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   CANVAS CLICK
-===================================================== */
-
-canvas.addEventListener(
-  "click",
-  (event) => {
-
-    if (!state.image) {
-      return;
-    }
-
-
-    const rect =
-      canvas.getBoundingClientRect();
-
-
-    const scaleX =
-      canvas.width /
-      rect.width;
-
-
-    const scaleY =
-      canvas.height /
-      rect.height;
-
-
-    const x =
-      (event.clientX -
-        rect.left) *
-      scaleX;
-
-
-    const y =
-      (event.clientY -
-        rect.top) *
-      scaleY;
-
-
-    const cell =
-      state.cells.find(
-        (item) => {
-
-          return (
-            x >= item.x &&
-            x <=
-              item.x +
-              item.width &&
-
-            y >= item.y &&
-            y <=
-              item.y +
-              item.height
-          );
-
-        }
-      );
-
-
-    if (!cell) {
-      return;
-    }
-
-
-    if (
-      state.selected.has(
-        cell.index
-      )
-    ) {
-
-      state.selected.delete(
-        cell.index
-      );
-
-    } else {
-
-      state.selected.add(
-        cell.index
-      );
-
-    }
-
-
-    updateUI();
+    canvas.width = Math.round(state.image.naturalWidth * ratio);
+    canvas.height = Math.round(state.image.naturalHeight * ratio);
+
+    canvas.style.width = `${canvas.width}px`;
+    canvas.style.height = `${canvas.height}px`;
 
     drawCanvas();
-
-    setStatus(
-      "변경사항 저장됨"
-    );
-
-  }
-);
-
-
-/* =====================================================
-   SELECT ALL
-===================================================== */
-
-selectAllBtn.addEventListener(
-  "click",
-  () => {
-
-    state.selected.clear();
-
-
-    state.cells.forEach(
-      (cell) => {
-
-        state.selected.add(
-          cell.index
-        );
-
-      }
-    );
-
-
-    updateUI();
-
-    drawCanvas();
-
-  }
-);
-
-
-/* =====================================================
-   CLEAR SELECTION
-===================================================== */
-
-clearSelBtn.addEventListener(
-  "click",
-  () => {
-
-    state.selected.clear();
-
-    updateUI();
-
-    drawCanvas();
-
-  }
-);
-
-
-/* =====================================================
-   UI
-===================================================== */
-
-function updateUI() {
-
-  const selectedCount =
-    state.selected.size;
-
-
-  const total =
-    state.cells.length;
-
-
-  selCount.textContent =
-    selectedCount;
-
-
-  totalCount.textContent =
-    `${total}개`;
-
-
-  if (
-    selectedCount === 0
-  ) {
-
-    cropHint.textContent =
-      "격자에서 칸을 선택하면 결과가 표시됩니다.";
-
-  } else {
-
-    cropHint.textContent =
-      `${selectedCount}개의 영역이 선택되었습니다.`;
-
   }
 
+  function getDisplayScale() {
+    if (!state.image || !canvas) return 1;
 
-  renderCrops();
-
-}
-
-
-/* =====================================================
-   QUICK GRID
-===================================================== */
-
-$$("[data-grid]").forEach(
-  (button) => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        const values =
-          button.dataset.grid
-            .split("x");
-
-
-        state.cols =
-          Number(values[0]);
-
-
-        state.rows =
-          Number(values[1]);
-
-
-        colsInput.value =
-          state.cols;
-
-
-        rowsInput.value =
-          state.rows;
-
-
-        state.selected.clear();
-
-
-        buildGrid();
-
-
-        setStatus(
-          "격자 변경됨"
-        );
-
-      }
-    );
-
-  }
-);
-
-
-/* =====================================================
-   GRID INPUT
-===================================================== */
-
-function applyGridInputs() {
-
-  let cols =
-    parseInt(
-      colsInput.value,
-      10
-    );
-
-
-  let rows =
-    parseInt(
-      rowsInput.value,
-      10
-    );
-
-
-  if (!Number.isFinite(cols)) {
-    cols = 3;
+    return canvas.width / state.image.naturalWidth;
   }
 
-
-  if (!Number.isFinite(rows)) {
-    rows = 3;
-  }
-
-
-  cols =
-    clamp(
-      cols,
-      1,
-      10
-    );
-
-
-  rows =
-    clamp(
-      rows,
-      1,
-      10
-    );
-
-
-  state.cols =
-    cols;
-
-
-  state.rows =
-    rows;
-
-
-  colsInput.value =
-    cols;
-
-
-  rowsInput.value =
-    rows;
-
-
-  state.selected.clear();
-
-
-  buildGrid();
-
-
-  setStatus(
-    "격자 변경됨"
-  );
-
-}
-
-
-colsInput.addEventListener(
-  "change",
-  applyGridInputs
-);
-
-
-rowsInput.addEventListener(
-  "change",
-  applyGridInputs
-);
-
-
-/* =====================================================
-   OFFSET
-===================================================== */
-
-offXSlider.addEventListener(
-  "input",
-  () => {
-
-    state.offX =
-      Number(
-        offXSlider.value
-      );
-
-
-    offXValue.textContent =
-      state.offX;
-
-
-    updateOffsets();
-
-  }
-);
-
-
-offYSlider.addEventListener(
-  "input",
-  () => {
-
-    state.offY =
-      Number(
-        offYSlider.value
-      );
-
-
-    offYValue.textContent =
-      state.offY;
-
-
-    updateOffsets();
-
-  }
-);
-
-
-function updateOffsets() {
-
-  if (!state.image) {
-    return;
-  }
-
-
-  const width =
-    state.image.naturalWidth ||
-    state.image.width;
-
-
-  const height =
-    state.image.naturalHeight ||
-    state.image.height;
-
-
-  const cellWidth =
-    width / state.cols;
-
-
-  const cellHeight =
-    height / state.rows;
-
-
-  state.cells.forEach(
-    (cell) => {
-
-      cell.x =
-        cell.col *
-          cellWidth +
-        state.offX;
-
-
-      cell.y =
-        cell.row *
-          cellHeight +
-        state.offY;
-
-    }
-  );
-
-
-  drawCanvas();
-
-  renderCrops();
-
-}
-
-
-/* =====================================================
-   CROPS
-===================================================== */
-
-function renderCrops() {
-
-  cropStrip.innerHTML = "";
-
-
-  if (
-    !state.image ||
-    state.selected.size === 0
-  ) {
-    return;
-  }
-
-
-  const selected =
-    [...state.selected]
-      .sort(
-        (a, b) => a - b
-      );
-
-
-  selected.forEach(
-    (index) => {
-
-      const cell =
-        state.cells[index];
-
-
-      if (!cell) {
-        return;
-      }
-
-
-      const item =
-        document.createElement(
-          "div"
-        );
-
-
-      item.className =
-        "crop-item";
-
-
-      const image =
-        document.createElement(
-          "img"
-        );
-
-
-      image.src =
-        createCropDataURL(
-          cell
-        );
-
-
-      image.alt =
-        `선택된 칸 ${index + 1}`;
-
-
-      const number =
-        document.createElement(
-          "span"
-        );
-
-
-      number.className =
-        "crop-number";
-
-
-      number.textContent =
-        index + 1;
-
-
-      item.appendChild(
-        image
-      );
-
-
-      item.appendChild(
-        number
-      );
-
-
-      cropStrip.appendChild(
-        item
-      );
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   CROP DATA
-===================================================== */
-
-function createCropDataURL(
-  cell
-) {
-
-  const output =
-    document.createElement(
-      "canvas"
-    );
-
-
-  const width =
-    Math.max(
-      1,
-      Math.round(
-        cell.width
-      )
-    );
-
-
-  const height =
-    Math.max(
-      1,
-      Math.round(
-        cell.height
-      )
-    );
-
-
-  output.width =
-    width;
-
-
-  output.height =
-    height;
-
-
-  const ctx =
-    output.getContext("2d");
-
-
-  ctx.drawImage(
-
-    state.image,
-
-    cell.x,
-    cell.y,
-
-    cell.width,
-    cell.height,
-
-    0,
-    0,
-
-    width,
-    height
-
-  );
-
-
-  return output.toDataURL(
-    "image/png"
-  );
-
-}
-
-
-/* =====================================================
-   LABEL COLORS
-===================================================== */
-
-$$(".color").forEach(
-  (button) => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        $$(".color").forEach(
-          (item) => {
-
-            item.classList.remove(
-              "active"
-            );
-
-          }
-        );
-
-
-        button.classList.add(
-          "active"
-        );
-
-
-        state.labelColor =
-          button.dataset.color;
-
-      }
-    );
-
-  }
-);
-
-
-/* =====================================================
-   LABEL SIZE
-===================================================== */
-
-fontSizeSlider.addEventListener(
-  "input",
-  () => {
-
-    state.labelSize =
-      Number(
-        fontSizeSlider.value
-      );
-
-
-    fontSizeValue.textContent =
-      `${state.labelSize}px`;
-
-  }
-);
-
-
-/* =====================================================
-   OUTLINE
-===================================================== */
-
-outlineToggle.addEventListener(
-  "change",
-  () => {
-
-    state.outline =
-      outlineToggle.checked;
-
-  }
-);
-
-
-/* =====================================================
-   APPLY LABEL
-===================================================== */
-
-applyLabelBtn.addEventListener(
-  "click",
-  () => {
-
-    const text =
-      labelText.value.trim();
-
-
-    if (!text) {
-
-      alert(
-        "라벨 텍스트를 입력해주세요."
-      );
-
-      return;
+  function getCropPixels() {
+    if (!state.image) return null;
+
+    if (state.cropNorm) {
+      return {
+        x: state.cropNorm.x * state.image.naturalWidth,
+        y: state.cropNorm.y * state.image.naturalHeight,
+        w: state.cropNorm.w * state.image.naturalWidth,
+        h: state.cropNorm.h * state.image.naturalHeight
+      };
     }
 
-
-    if (
-      state.selected.size === 0
-    ) {
-
-      alert(
-        "먼저 라벨을 적용할 칸을 선택해주세요."
-      );
-
-      return;
-    }
-
-
-    state.selected.forEach(
-      (index) => {
-
-        state.labels.set(
-          index,
-          {
-
-            text,
-
-            color:
-              state.labelColor,
-
-            size:
-              state.labelSize,
-
-            outline:
-              state.outline
-
-          }
-        );
-
-      }
-    );
-
-
-    setStatus(
-      "라벨 적용됨"
-    );
-
-  }
-);
-
-
-/* =====================================================
-   TABS
-===================================================== */
-
-$$(".tab").forEach(
-  (tab) => {
-
-    tab.addEventListener(
-      "click",
-      () => {
-
-        const target =
-          tab.dataset.tab;
-
-
-        $$(".tab").forEach(
-          (item) => {
-
-            item.classList.remove(
-              "active"
-            );
-
-          }
-        );
-
-
-        $$(".tab-content").forEach(
-          (item) => {
-
-            item.classList.remove(
-              "active"
-            );
-
-          }
-        );
-
-
-        tab.classList.add(
-          "active"
-        );
-
-
-        const content =
-          $(`#tab-${target}`);
-
-
-        if (content) {
-
-          content.classList.add(
-            "active"
-          );
-
-        }
-
-      }
-    );
-
-  }
-);
-
-
-/* =====================================================
-   TEMPLATES
-===================================================== */
-
-const TEMPLATE_KEY =
-  "iris-pubg-writer-templates";
-
-
-function loadTemplates() {
-
-  try {
-
-    const saved =
-      localStorage.getItem(
-        TEMPLATE_KEY
-      );
-
-
-    if (!saved) {
-      return;
-    }
-
-
-    const parsed =
-      JSON.parse(saved);
-
-
-    if (
-      Array.isArray(parsed)
-    ) {
-
-      state.templates =
-        parsed;
-
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "템플릿 불러오기 실패:",
-      error
-    );
-
-
-    state.templates = [];
-
+    return state.crop;
   }
 
+  function saveCropNormalized(crop) {
+    if (!state.image) return;
 
-  renderTemplates();
-
-}
-
-
-function saveTemplates() {
-
-  try {
-
-    localStorage.setItem(
-      TEMPLATE_KEY,
-      JSON.stringify(
-        state.templates
-      )
-    );
-
-  } catch (error) {
-
-    console.warn(
-      "템플릿 저장 실패:",
-      error
-    );
-
-  }
-
-}
-
-
-saveTemplateBtn.addEventListener(
-  "click",
-  () => {
-
-    const name =
-      templateName.value.trim();
-
-
-    if (!name) {
-
-      alert(
-        "템플릿 이름을 입력해주세요."
-      );
-
-      return;
-    }
-
-
-    const template = {
-
-      id:
-        Date.now(),
-
-      name,
-
-      cols:
-        state.cols,
-
-      rows:
-        state.rows,
-
-      offX:
-        state.offX,
-
-      offY:
-        state.offY,
-
-      labelColor:
-        state.labelColor,
-
-      labelSize:
-        state.labelSize,
-
-      outline:
-        state.outline
-
+    state.cropNorm = {
+      x: crop.x / state.image.naturalWidth,
+      y: crop.y / state.image.naturalHeight,
+      w: crop.w / state.image.naturalWidth,
+      h: crop.h / state.image.naturalHeight
     };
 
-
-    state.templates.unshift(
-      template
-    );
-
-
-    saveTemplates();
-
-    renderTemplates();
-
-
-    templateName.value =
-      "";
-
-
-    setStatus(
-      "템플릿 저장됨"
-    );
-
-  }
-);
-
-
-/* =====================================================
-   RENDER TEMPLATES
-===================================================== */
-
-function renderTemplates() {
-
-  templateList.innerHTML =
-    "";
-
-
-  if (
-    state.templates.length === 0
-  ) {
-
-    const empty =
-      document.createElement(
-        "div"
-      );
-
-
-    empty.className =
-      "template-empty";
-
-
-    empty.textContent =
-      "저장된 템플릿이 없습니다.";
-
-
-    templateList.appendChild(
-      empty
-    );
-
-
-    return;
+    state.crop = crop;
   }
 
+  function clampCrop(crop) {
+    if (!canvas) return crop;
 
-  state.templates.forEach(
-    (template) => {
+    const min = 10;
 
-      const item =
-        document.createElement(
-          "div"
-        );
+    crop.w = Math.max(min, crop.w);
+    crop.h = Math.max(min, crop.h);
 
-
-      item.className =
-        "template-item";
-
-
-      const info =
-        document.createElement(
-          "div"
-        );
-
-
-      const title =
-        document.createElement(
-          "strong"
-        );
-
-
-      title.textContent =
-        template.name;
-
-
-      const sub =
-        document.createElement(
-          "small"
-        );
-
-
-      sub.textContent =
-        `${template.cols} × ${template.rows}`;
-
-
-      info.appendChild(
-        title
-      );
-
-
-      info.appendChild(
-        sub
-      );
-
-
-      const use =
-        document.createElement(
-          "button"
-        );
-
-
-      use.type =
-        "button";
-
-
-      use.className =
-        "template-use";
-
-
-      use.textContent =
-        "사용";
-
-
-      use.addEventListener(
-        "click",
-        () => {
-
-          applyTemplate(
-            template
-          );
-
-        }
-      );
-
-
-      item.appendChild(
-        info
-      );
-
-
-      item.appendChild(
-        use
-      );
-
-
-      templateList.appendChild(
-        item
-      );
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   APPLY TEMPLATE
-===================================================== */
-
-function applyTemplate(
-  template
-) {
-
-  state.cols =
-    template.cols;
-
-
-  state.rows =
-    template.rows;
-
-
-  state.offX =
-    template.offX || 0;
-
-
-  state.offY =
-    template.offY || 0;
-
-
-  state.labelColor =
-    template.labelColor ||
-    "#171716";
-
-
-  state.labelSize =
-    template.labelSize ||
-    24;
-
-
-  state.outline =
-    template.outline !== false;
-
-
-  colsInput.value =
-    state.cols;
-
-
-  rowsInput.value =
-    state.rows;
-
-
-  offXSlider.value =
-    state.offX;
-
-
-  offYSlider.value =
-    state.offY;
-
-
-  offXValue.textContent =
-    state.offX;
-
-
-  offYValue.textContent =
-    state.offY;
-
-
-  fontSizeSlider.value =
-    state.labelSize;
-
-
-  fontSizeValue.textContent =
-    `${state.labelSize}px`;
-
-
-  outlineToggle.checked =
-    state.outline;
-
-
-  state.selected.clear();
-
-
-  buildGrid();
-
-
-  setStatus(
-    "템플릿 적용됨"
-  );
-
-}
-
-
-/* =====================================================
-   EXPORT
-===================================================== */
-
-exportBtn.addEventListener(
-  "click",
-  exportSelected
-);
-
-
-mobileExport.addEventListener(
-  "click",
-  exportSelected
-);
-
-
-function exportSelected() {
-
-  if (!state.image) {
-
-    alert(
-      "먼저 이미지를 업로드해주세요."
+    crop.x = Math.max(
+      0,
+      Math.min(crop.x, canvas.width - crop.w)
     );
 
-    return;
+    crop.y = Math.max(
+      0,
+      Math.min(crop.y, canvas.height - crop.h)
+    );
+
+    return crop;
   }
 
+  function drawCanvas() {
+    if (!ctx || !state.image) return;
 
-  if (
-    state.selected.size === 0
-  ) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    alert(
-      "내보낼 칸을 하나 이상 선택해주세요."
-    );
-
-    return;
-  }
-
-
-  const selected =
-    [...state.selected]
-      .sort(
-        (a, b) => a - b
-      );
-
-
-  selected.forEach(
-    (index, order) => {
-
-      const cell =
-        state.cells[index];
-
-
-      if (!cell) {
-        return;
-      }
-
-
-      const output =
-        document.createElement(
-          "canvas"
-        );
-
-
-      output.width =
-        Math.max(
-          1,
-          Math.round(
-            cell.width
-          )
-        );
-
-
-      output.height =
-        Math.max(
-          1,
-          Math.round(
-            cell.height
-          )
-        );
-
-
-      const ctx =
-        output.getContext(
-          "2d"
-        );
-
-
-      ctx.drawImage(
-
-        state.image,
-
-        cell.x,
-        cell.y,
-
-        cell.width,
-        cell.height,
-
-        0,
-        0,
-
-        output.width,
-        output.height
-
-      );
-
-
-      const label =
-        state.labels.get(
-          index
-        );
-
-
-      if (label) {
-
-        drawLabel(
-          ctx,
-          label,
-          output.width,
-          output.height
-        );
-
-      }
-
-
-      const link =
-        document.createElement(
-          "a"
-        );
-
-
-      link.download =
-        `iris-writer-${String(
-          order + 1
-        ).padStart(
-          2,
-          "0"
-        )}.png`;
-
-
-      link.href =
-        output.toDataURL(
-          "image/png"
-        );
-
-
-      document.body.appendChild(
-        link
-      );
-
-
-      link.click();
-
-
-      link.remove();
-
-    }
-  );
-
-
-  setStatus(
-    "내보내기 완료"
-  );
-
-}
-
-
-/* =====================================================
-   DRAW LABEL
-===================================================== */
-
-function drawLabel(
-  ctx,
-  label,
-  width,
-  height
-) {
-
-  const size =
-    Math.min(
-      label.size,
-      Math.max(
-        12,
-        width / 8
-      )
-    );
-
-
-  ctx.font =
-    `600 ${size}px DM Sans`;
-
-
-  ctx.textAlign =
-    "center";
-
-
-  ctx.textBaseline =
-    "middle";
-
-
-  const x =
-    width / 2;
-
-
-  const y =
-    height / 2;
-
-
-  if (label.outline) {
-
-    ctx.strokeStyle =
-      label.color === "#ffffff"
-        ? "#171716"
-        : "#ffffff";
-
-
-    ctx.lineWidth =
-      Math.max(
-        3,
-        size / 7
-      );
-
-
-    ctx.strokeText(
-      label.text,
-      x,
-      y
-    );
-
-  }
-
-
-  ctx.fillStyle =
-    label.color;
-
-
-  ctx.fillText(
-    label.text,
-    x,
-    y
-  );
-
-}
-
-
-/* =====================================================
-   RESET
-===================================================== */
-
-resetBtn.addEventListener(
-  "click",
-  resetProject
-);
-
-
-function resetProject() {
-
-  const confirmed =
-    confirm(
-      "현재 작업을 초기화할까요?"
-    );
-
-
-  if (!confirmed) {
-    return;
-  }
-
-
-  state.image =
-    null;
-
-
-  state.cols =
-    3;
-
-
-  state.rows =
-    3;
-
-
-  state.offX =
-    0;
-
-
-  state.offY =
-    0;
-
-
-  state.cells =
-    [];
-
-
-  state.selected.clear();
-
-  state.labels.clear();
-
-
-  colsInput.value =
-    3;
-
-
-  rowsInput.value =
-    3;
-
-
-  offXSlider.value =
-    0;
-
-
-  offYSlider.value =
-    0;
-
-
-  offXValue.textContent =
-    "0";
-
-
-  offYValue.textContent =
-    "0";
-
-
-  cropStrip.innerHTML =
-    "";
-
-
-  cropHint.textContent =
-    "격자에서 칸을 선택하면 결과가 표시됩니다.";
-
-
-  totalCount.textContent =
-    "0개";
-
-
-  selCount.textContent =
-    "0";
-
-
-  canvas.width =
-    300;
-
-
-  canvas.height =
-    150;
-
-
-  canvas.style.width =
-    "";
-
-
-  canvas.style.height =
-    "";
-
-
-  canvas
-    .getContext("2d")
-    .clearRect(
+    ctx.drawImage(
+      state.image,
       0,
       0,
       canvas.width,
       canvas.height
     );
 
+    const crop = getCropPixels();
 
-  emptyState.classList.remove(
-    "hidden"
-  );
+    if (!crop) {
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.08)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      ctx.fillStyle = "#171716";
+      ctx.font = "600 15px DM Sans, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(
+        "드래그해서 자르기 영역 선택",
+        canvas.width / 2,
+        canvas.height / 2
+      );
 
-  overlayBar.classList.add(
-    "hidden"
-  );
+      ctx.restore();
+      return;
+    }
 
+    ctx.save();
 
-  fileInput.value =
-    "";
-
-
-  setStatus(
-    "초기화됨"
-  );
-
-}
-
-
-newProjectBtn.addEventListener(
-  "click",
-  resetProject
-);
-
-
-mobileNewProject.addEventListener(
-  "click",
-  resetProject
-);
-
-
-/* =====================================================
-   MOBILE SIDEBAR
-===================================================== */
-
-mobileMenuBtn.addEventListener(
-  "click",
-  () => {
-
-    sidebar.classList.toggle(
-      "open"
+    ctx.fillStyle = "rgba(0,0,0,.48)";
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
     );
 
+    ctx.clearRect(
+      crop.x,
+      crop.y,
+      crop.w,
+      crop.h
+    );
+
+    ctx.drawImage(
+      state.image,
+      crop.x / getDisplayScale(),
+      crop.y / getDisplayScale(),
+      crop.w / getDisplayScale(),
+      crop.h / getDisplayScale(),
+      crop.x,
+      crop.y,
+      crop.w,
+      crop.h
+    );
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      crop.x,
+      crop.y,
+      crop.w,
+      crop.h
+    );
+
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.font = "600 12px DM Sans, sans-serif";
+    ctx.fillText(
+      `${Math.round(crop.w / getDisplayScale())} × ${Math.round(crop.h / getDisplayScale())}`,
+      crop.x + 8,
+      crop.y + 18
+    );
+
+    ctx.restore();
   }
-);
 
+  function pointerPosition(e) {
+    const rect = canvas.getBoundingClientRect();
 
-document.addEventListener(
-  "click",
-  (event) => {
+    return {
+      x: (e.clientX - rect.left) *
+        (canvas.width / rect.width),
+
+      y: (e.clientY - rect.top) *
+        (canvas.height / rect.height)
+    };
+  }
+
+  function pointInsideCrop(p, crop) {
+    return (
+      p.x >= crop.x &&
+      p.x <= crop.x + crop.w &&
+      p.y >= crop.y &&
+      p.y <= crop.y + crop.h
+    );
+  }
+
+  function beginCrop(e) {
+    if (!state.image) return;
+
+    const p = pointerPosition(e);
+    const current = getCropPixels();
+
+    if (current && pointInsideCrop(p, current)) {
+      state.draggingCrop = true;
+      state.cropStart = {
+        x: p.x - current.x,
+        y: p.y - current.y,
+        mode: "move"
+      };
+    } else {
+      state.draggingCrop = true;
+
+      state.cropStart = {
+        x: p.x,
+        y: p.y,
+        mode: "create"
+      };
+
+      state.crop = {
+        x: p.x,
+        y: p.y,
+        w: 1,
+        h: 1
+      };
+
+      state.cropNorm = null;
+    }
+
+    canvas.setPointerCapture?.(e.pointerId);
+  }
+
+  function moveCrop(e) {
+    if (!state.draggingCrop || !state.image) return;
+
+    const p = pointerPosition(e);
+    const start = state.cropStart;
+
+    if (start.mode === "create") {
+      const x = Math.min(start.x, p.x);
+      const y = Math.min(start.y, p.y);
+      const w = Math.abs(p.x - start.x);
+      const h = Math.abs(p.y - start.y);
+
+      state.crop = clampCrop({
+        x,
+        y,
+        w,
+        h
+      });
+    } else {
+      const crop = getCropPixels();
+
+      state.crop = clampCrop({
+        x: p.x - start.x,
+        y: p.y - start.y,
+        w: crop.w,
+        h: crop.h
+      });
+    }
+
+    drawCanvas();
+  }
+
+  function endCrop() {
+    if (!state.draggingCrop) return;
+
+    state.draggingCrop = false;
 
     if (
-      !sidebar.classList.contains(
-        "open"
-      )
+      state.crop &&
+      state.crop.w > 8 &&
+      state.crop.h > 8
+    ) {
+      saveCropNormalized(state.crop);
+    }
+
+    drawCanvas();
+    setStatus("저장됨");
+  }
+
+  function cropCurrentPiece() {
+    if (!state.image || !state.crop) return;
+
+    const crop = getCropPixels();
+    if (!crop) return;
+
+    const scale = state.image.naturalWidth / canvas.width;
+
+    const sx = crop.x * scale;
+    const sy = crop.y * scale;
+    const sw = crop.w * scale;
+    const sh = crop.h * scale;
+
+    const out = document.createElement("canvas");
+
+    out.width = Math.round(sw);
+    out.height = Math.round(sh);
+
+    const outCtx = out.getContext("2d");
+
+    outCtx.drawImage(
+      state.image,
+      sx,
+      sy,
+      sw,
+      sh,
+      0,
+      0,
+      out.width,
+      out.height
+    );
+
+    const piece = {
+      id: makeId(),
+      src: out.toDataURL("image/png"),
+      width: out.width,
+      height: out.height
+    };
+
+    state.pieces.push(piece);
+
+    renderPieces();
+    setStatus("조각 저장됨");
+  }
+
+  function renderPieces() {
+    if (!cropStrip) return;
+
+    cropStrip.innerHTML = "";
+
+    state.pieces.forEach((piece, index) => {
+      const item = document.createElement("button");
+
+      item.type = "button";
+      item.className = "crop-item";
+      item.dataset.id = piece.id;
+
+      item.innerHTML = `
+        <img src="${piece.src}" alt="조각 ${index + 1}">
+        <span>${index + 1}</span>
+      `;
+
+      item.addEventListener("click", () => {
+        addPieceToBoard(piece);
+      });
+
+      cropStrip.appendChild(item);
+    });
+
+    const total = $("#totalCount");
+    if (total) {
+      total.textContent = `${state.pieces.length}개`;
+    }
+
+    const hint = $("#cropHint");
+
+    if (hint) {
+      hint.textContent =
+        state.pieces.length
+          ? "조각을 클릭하면 대필판에 추가됩니다."
+          : "영역을 선택한 뒤 조각 저장을 눌러주세요.";
+    }
+  }
+
+  function setupFileInput() {
+    if (!fileInput) return;
+
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+
+      if (!file) return;
+
+      try {
+        const img = await loadImage(file);
+
+        state.image = img;
+
+        if (emptyState) {
+          emptyState.classList.add("hidden");
+        }
+
+        if (overlayBar) {
+          overlayBar.classList.remove("hidden");
+        }
+
+        fitCanvas();
+
+        if (state.cropNorm) {
+          state.crop = getCropPixels();
+        } else {
+          state.crop = null;
+        }
+
+        drawCanvas();
+
+        setStatus("이미지 불러옴");
+      } catch {
+        alert("이미지를 불러오지 못했습니다.");
+      }
+
+      fileInput.value = "";
+    });
+  }
+
+  function openImagePicker() {
+    fileInput?.click();
+  }
+
+  function setupUploadButtons() {
+    $("#startBtn")?.addEventListener("click", () => {
+      $("#landing")?.classList.add("hidden");
+      $("#app")?.classList.remove("hidden");
+    });
+
+    $("#uploadTopBtn")?.addEventListener(
+      "click",
+      openImagePicker
+    );
+
+    $("#emptyUploadBtn")?.addEventListener(
+      "click",
+      openImagePicker
+    );
+  }
+
+  function setupCropButtons() {
+    canvas?.addEventListener(
+      "pointerdown",
+      beginCrop
+    );
+
+    canvas?.addEventListener(
+      "pointermove",
+      moveCrop
+    );
+
+    canvas?.addEventListener(
+      "pointerup",
+      endCrop
+    );
+
+    canvas?.addEventListener(
+      "pointercancel",
+      endCrop
+    );
+
+    const selectBtn = $("#selectAllBtn");
+
+    if (selectBtn) {
+      selectBtn.textContent = "조각 저장";
+
+      selectBtn.addEventListener(
+        "click",
+        cropCurrentPiece
+      );
+    }
+
+    $("#clearSelBtn")?.addEventListener(
+      "click",
+      () => {
+        state.crop = null;
+        state.cropNorm = null;
+        drawCanvas();
+        setStatus("선택 해제");
+      }
+    );
+  }
+
+  function createTemplateInput() {
+    const input = document.createElement("input");
+
+    input.type = "file";
+    input.accept = "image/*";
+    input.hidden = true;
+
+    document.body.appendChild(input);
+
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+
+      if (!file) return;
+
+      try {
+        const img = await loadImage(file);
+
+        const template = {
+          id: makeId(),
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          src: img.src,
+          width: img.naturalWidth,
+          height: img.naturalHeight
+        };
+
+        state.templates.push(template);
+        state.selectedTemplate = template;
+
+        renderTemplates();
+        renderBoard();
+
+        setStatus("대필판 추가됨");
+      } catch {
+        alert("대필판을 불러오지 못했습니다.");
+      }
+
+      input.value = "";
+    });
+
+    return input;
+  }
+
+  let templateInput = null;
+
+  function setupTemplates() {
+    templateInput = createTemplateInput();
+
+    const list = $("#templateList");
+
+    if (!list) return;
+
+    const upload = document.createElement("button");
+
+    upload.type = "button";
+    upload.className = "template-upload";
+    upload.textContent = "+ 대필판 업로드";
+
+    upload.addEventListener(
+      "click",
+      () => templateInput.click()
+    );
+
+    list.parentNode.insertBefore(
+      upload,
+      list
+    );
+  }
+
+  function renderTemplates() {
+    const list = $("#templateList");
+
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    state.templates.forEach(template => {
+      const item = document.createElement("button");
+
+      item.type = "button";
+      item.className = "template-item";
+
+      if (
+        state.selectedTemplate?.id ===
+        template.id
+      ) {
+        item.classList.add("active");
+      }
+
+      item.innerHTML = `
+        <img src="${template.src}" alt="">
+        <span>${template.name}</span>
+      `;
+
+      item.addEventListener(
+        "click",
+        () => {
+          state.selectedTemplate = template;
+          renderTemplates();
+          renderBoard();
+        }
+      );
+
+      list.appendChild(item);
+    });
+  }
+
+  let boardCanvas = null;
+  let boardCtx = null;
+
+  function ensureBoard() {
+    const section = $(".result-section");
+
+    if (!section) return;
+
+    let holder = section.querySelector(
+      ".iris-composer"
+    );
+
+    if (!holder) {
+      holder = document.createElement("div");
+      holder.className = "iris-composer";
+
+      boardCanvas =
+        document.createElement("canvas");
+
+      boardCanvas.className =
+        "iris-composer-canvas";
+
+      holder.appendChild(boardCanvas);
+      section.appendChild(holder);
+    } else {
+      boardCanvas =
+        holder.querySelector("canvas");
+    }
+
+    boardCtx =
+      boardCanvas?.getContext("2d");
+  }
+
+  function renderBoard() {
+    ensureBoard();
+
+    if (
+      !boardCanvas ||
+      !boardCtx ||
+      !state.selectedTemplate
     ) {
       return;
     }
 
+    const template = state.selectedTemplate;
 
-    if (
-      !sidebar.contains(
-        event.target
-      ) &&
-      event.target !==
-        mobileMenuBtn
-    ) {
-
-      sidebar.classList.remove(
-        "open"
-      );
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   HELP
-===================================================== */
-
-$("#helpBtn").addEventListener(
-  "click",
-  () => {
-
-    alert(
-`Iris — PUBG Writer
-
-1. 이미지를 업로드합니다.
-2. 격자를 설정합니다.
-3. 원하는 칸을 클릭합니다.
-4. 라벨을 추가할 수 있습니다.
-5. 내보내기를 누르면 PNG로 저장됩니다.
-
-Vesper1.0`
+    const maxW = 900;
+    const ratio = Math.min(
+      1,
+      maxW / template.width
     );
 
-  }
-);
+    boardCanvas.width =
+      Math.round(template.width * ratio);
 
+    boardCanvas.height =
+      Math.round(template.height * ratio);
 
-/* =====================================================
-   SETTINGS
-===================================================== */
+    boardCtx.clearRect(
+      0,
+      0,
+      boardCanvas.width,
+      boardCanvas.height
+    );
 
-$("#settingsBtn").addEventListener(
-  "click",
-  () => {
+    const bg = new Image();
 
-    const settings =
-      document.querySelector(
-        ".settings"
+    bg.onload = () => {
+      boardCtx.drawImage(
+        bg,
+        0,
+        0,
+        boardCanvas.width,
+        boardCanvas.height
       );
 
+      drawObjects();
+    };
 
-    if (settings) {
+    bg.src = template.src;
+  }
 
-      settings.scrollIntoView({
-        behavior: "smooth"
+  function addPieceToBoard(piece) {
+    ensureBoard();
+
+    if (!boardCanvas || !state.selectedTemplate) {
+      alert("먼저 대필판을 선택해주세요.");
+      return;
+    }
+
+    const maxWidth =
+      boardCanvas.width * 0.35;
+
+    const ratio =
+      Math.min(
+        1,
+        maxWidth / piece.width
+      );
+
+    const obj = {
+      id: makeId(),
+      type: "image",
+      src: piece.src,
+      x: 30 + state.objects.length * 10,
+      y: 30 + state.objects.length * 10,
+      width: piece.width * ratio,
+      height: piece.height * ratio,
+      rotation: 0
+    };
+
+    state.objects.push(obj);
+    state.selectedObject = obj;
+
+    renderBoard();
+  }
+
+  function addText() {
+    const input = $("#labelText");
+
+    const text =
+      input?.value?.trim();
+
+    if (!text) return;
+
+    ensureBoard();
+
+    if (!boardCanvas) return;
+
+    const obj = {
+      id: makeId(),
+      type: "text",
+      text,
+      x: boardCanvas.width / 2,
+      y: boardCanvas.height / 2,
+      fontSize: state.fontSize,
+      color: state.textColor,
+      outline: state.outline
+    };
+
+    state.objects.push(obj);
+    state.selectedObject = obj;
+
+    renderBoard();
+
+    input.value = "";
+
+    setStatus("텍스트 추가됨");
+  }
+
+  function drawObjects() {
+    if (!boardCtx) return;
+
+    state.objects.forEach(obj => {
+      if (obj.type === "image") {
+        const img = new Image();
+
+        img.onload = () => {
+          boardCtx.drawImage(
+            img,
+            obj.x,
+            obj.y,
+            obj.width,
+            obj.height
+          );
+
+          drawSelection(obj);
+        };
+
+        img.src = obj.src;
+      }
+
+      if (obj.type === "text") {
+        boardCtx.save();
+
+        boardCtx.font =
+          `600 ${obj.fontSize}px DM Sans, sans-serif`;
+
+        boardCtx.textAlign = "center";
+        boardCtx.textBaseline = "middle";
+
+        if (obj.outline) {
+          boardCtx.lineWidth = 5;
+          boardCtx.strokeStyle =
+            "rgba(255,255,255,.9)";
+
+          boardCtx.strokeText(
+            obj.text,
+            obj.x,
+            obj.y
+          );
+        }
+
+        boardCtx.fillStyle = obj.color;
+
+        boardCtx.fillText(
+          obj.text,
+          obj.x,
+          obj.y
+        );
+
+        boardCtx.restore();
+
+        drawSelection(obj);
+      }
+    });
+  }
+
+  function drawSelection(obj) {
+    if (
+      !state.selectedObject ||
+      state.selectedObject.id !== obj.id
+    ) {
+      return;
+    }
+
+    boardCtx.save();
+
+    boardCtx.strokeStyle =
+      "rgba(0,0,0,.65)";
+
+    boardCtx.lineWidth = 1;
+    boardCtx.setLineDash([5, 5]);
+
+    if (obj.type === "image") {
+      boardCtx.strokeRect(
+        obj.x,
+        obj.y,
+        obj.width,
+        obj.height
+      );
+    } else {
+      boardCtx.strokeRect(
+        obj.x - 80,
+        obj.y - obj.fontSize,
+        160,
+        obj.fontSize * 2
+      );
+    }
+
+    boardCtx.restore();
+  }
+
+  function objectHit(obj, p) {
+    if (obj.type === "image") {
+      return (
+        p.x >= obj.x &&
+        p.x <= obj.x + obj.width &&
+        p.y >= obj.y &&
+        p.y <= obj.y + obj.height
+      );
+    }
+
+    return (
+      p.x >= obj.x - 100 &&
+      p.x <= obj.x + 100 &&
+      p.y >= obj.y - obj.fontSize &&
+      p.y <= obj.y + obj.fontSize
+    );
+  }
+
+  function boardPoint(e) {
+    const rect =
+      boardCanvas.getBoundingClientRect();
+
+    return {
+      x:
+        (e.clientX - rect.left) *
+        (boardCanvas.width / rect.width),
+
+      y:
+        (e.clientY - rect.top) *
+        (boardCanvas.height / rect.height)
+    };
+  }
+
+  function boardDown(e) {
+    if (!boardCanvas) return;
+
+    const p = boardPoint(e);
+
+    const hit =
+      [...state.objects]
+        .reverse()
+        .find(obj =>
+          objectHit(obj, p)
+        );
+
+    if (!hit) {
+      state.selectedObject = null;
+      renderBoard();
+      return;
+    }
+
+    state.selectedObject = hit;
+    state.draggingObject = true;
+
+    state.objectOffset = {
+      x: p.x - hit.x,
+      y: p.y - hit.y
+    };
+
+    boardCanvas.setPointerCapture?.(
+      e.pointerId
+    );
+
+    renderBoard();
+  }
+
+  function boardMove(e) {
+    if (
+      !state.draggingObject ||
+      !state.selectedObject
+    ) {
+      return;
+    }
+
+    const p = boardPoint(e);
+    const obj = state.selectedObject;
+
+    obj.x =
+      p.x - state.objectOffset.x;
+
+    obj.y =
+      p.y - state.objectOffset.y;
+
+    renderBoard();
+  }
+
+  function boardUp() {
+    state.draggingObject = false;
+  }
+
+  function setupBoardEvents() {
+    ensureBoard();
+
+    boardCanvas?.addEventListener(
+      "pointerdown",
+      boardDown
+    );
+
+    boardCanvas?.addEventListener(
+      "pointermove",
+      boardMove
+    );
+
+    boardCanvas?.addEventListener(
+      "pointerup",
+      boardUp
+    );
+
+    boardCanvas?.addEventListener(
+      "pointercancel",
+      boardUp
+    );
+  }
+
+  function setupLabels() {
+    const slider =
+      $("#fontSizeSlider");
+
+    slider?.addEventListener(
+      "input",
+      () => {
+        state.fontSize =
+          Number(slider.value);
+
+        const value =
+          $("#fontSizeValue");
+
+        if (value) {
+          value.textContent =
+            `${state.fontSize}px`;
+        }
+
+        if (
+          state.selectedObject?.type ===
+          "text"
+        ) {
+          state.selectedObject.fontSize =
+            state.fontSize;
+
+          renderBoard();
+        }
+      }
+    );
+
+    $("#outlineToggle")?.addEventListener(
+      "change",
+      e => {
+        state.outline =
+          e.target.checked;
+
+        if (
+          state.selectedObject?.type ===
+          "text"
+        ) {
+          state.selectedObject.outline =
+            state.outline;
+
+          renderBoard();
+        }
+      }
+    );
+
+    $$("#colorRow .color").forEach(
+      button => {
+        button.addEventListener(
+          "click",
+          () => {
+            $$("#colorRow .color")
+              .forEach(x =>
+                x.classList.remove("active")
+              );
+
+            button.classList.add("active");
+
+            state.textColor =
+              button.dataset.color;
+
+            if (
+              state.selectedObject?.type ===
+              "text"
+            ) {
+              state.selectedObject.color =
+                state.textColor;
+
+              renderBoard();
+            }
+          }
+        );
+      }
+    );
+
+    $("#applyLabelBtn")
+      ?.addEventListener(
+        "click",
+        addText
+      );
+  }
+
+  function exportPNG() {
+    if (!boardCanvas) {
+      alert("먼저 대필판을 선택해주세요.");
+      return;
+    }
+
+    if (!state.selectedTemplate) {
+      alert("먼저 대필판을 선택해주세요.");
+      return;
+    }
+
+    renderBoard();
+
+    setTimeout(() => {
+      const link =
+        document.createElement("a");
+
+      link.download =
+        `iris-pubg-writer-${Date.now()}.png`;
+
+      link.href =
+        boardCanvas.toDataURL("image/png");
+
+      link.click();
+
+      setStatus("PNG 내보내기 완료");
+    }, 200);
+  }
+
+  function resetProject() {
+    state.image = null;
+    state.crop = null;
+    state.cropNorm = null;
+    state.pieces = [];
+    state.objects = [];
+    state.selectedObject = null;
+    state.selectedTemplate = null;
+    state.templates = [];
+
+    if (emptyState) {
+      emptyState.classList.remove("hidden");
+    }
+
+    if (overlayBar) {
+      overlayBar.classList.add("hidden");
+    }
+
+    if (ctx && canvas) {
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+
+    renderPieces();
+    renderTemplates();
+    renderBoard();
+
+    setStatus("초기화됨");
+  }
+
+  function setupTabs() {
+    $$(".tab").forEach(tab => {
+      tab.addEventListener(
+        "click",
+        () => {
+          const target =
+            tab.dataset.tab;
+
+          $$(".tab").forEach(
+            x =>
+              x.classList.remove("active")
+          );
+
+          $$(".tab-content").forEach(
+            x =>
+              x.classList.remove("active")
+          );
+
+          tab.classList.add("active");
+
+          $(`#tab-${target}`)
+            ?.classList.add("active");
+        }
+      );
+    });
+  }
+
+  function setupNavigation() {
+    $("#brandHome")
+      ?.addEventListener(
+        "click",
+        () => {
+          $("#app")
+            ?.classList.add("hidden");
+
+          $("#landing")
+            ?.classList.remove("hidden");
+        }
+      );
+
+    $("#sideBrand")
+      ?.addEventListener(
+        "click",
+        () => {
+          $("#app")
+            ?.classList.add("hidden");
+
+          $("#landing")
+            ?.classList.remove("hidden");
+        }
+      );
+
+    $("#resetBtn")
+      ?.addEventListener(
+        "click",
+        resetProject
+      );
+
+    $("#newProjectBtn")
+      ?.addEventListener(
+        "click",
+        resetProject
+      );
+
+    $("#mobileNewProject")
+      ?.addEventListener(
+        "click",
+        resetProject
+      );
+
+    $("#exportBtn")
+      ?.addEventListener(
+        "click",
+        exportPNG
+      );
+
+    $("#mobileExport")
+      ?.addEventListener(
+        "click",
+        exportPNG
+      );
+  }
+
+  function setupQuickGrid() {
+    $$(".quick-grid button")
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          () => {
+            setStatus(
+              "자유 자르기 모드에서는 격자를 사용하지 않습니다."
+            );
+          }
+        );
+      });
+  }
+
+  function setupDragDrop() {
+    const holder =
+      $("#canvasHolder");
+
+    if (!holder) return;
+
+    ["dragenter", "dragover"]
+      .forEach(type => {
+        holder.addEventListener(
+          type,
+          e => {
+            e.preventDefault();
+            holder.classList.add("dragging");
+          }
+        );
       });
 
-    }
+    ["dragleave", "drop"]
+      .forEach(type => {
+        holder.addEventListener(
+          type,
+          e => {
+            e.preventDefault();
+            holder.classList.remove("dragging");
+          }
+        );
+      });
 
+    holder.addEventListener(
+      "drop",
+      async e => {
+        const file =
+          [...e.dataTransfer.files]
+            .find(
+              f =>
+                f.type.startsWith("image/")
+            );
+
+        if (!file) return;
+
+        const img =
+          await loadImage(file);
+
+        state.image = img;
+
+        emptyState?.classList.add(
+          "hidden"
+        );
+
+        overlayBar?.classList.remove(
+          "hidden"
+        );
+
+        fitCanvas();
+
+        if (state.cropNorm) {
+          state.crop =
+            getCropPixels();
+        }
+
+        drawCanvas();
+      }
+    );
   }
-);
 
+  window.addEventListener(
+    "resize",
+    () => {
+      if (state.image) {
+        fitCanvas();
 
-/* =====================================================
-   KEYBOARD
-===================================================== */
+        if (state.cropNorm) {
+          state.crop =
+            getCropPixels();
 
-document.addEventListener(
-  "keydown",
-  (event) => {
+          drawCanvas();
+        }
+      }
 
-    if (
-      (event.ctrlKey ||
-        event.metaKey) &&
-      event.key.toLowerCase() === "o"
-    ) {
-
-      event.preventDefault();
-
-      openFilePicker();
-
+      if (state.selectedTemplate) {
+        renderBoard();
+      }
     }
-
-
-    if (
-      event.key === "Escape"
-    ) {
-
-      sidebar.classList.remove(
-        "open"
-      );
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   STATUS
-===================================================== */
-
-let statusTimer = null;
-
-
-function setStatus(text) {
-
-  saveStatus.textContent =
-    text;
-
-
-  clearTimeout(
-    statusTimer
   );
 
+  function init() {
+    setupFileInput();
+    setupUploadButtons();
+    setupCropButtons();
+    setupTemplates();
+    setupBoardEvents();
+    setupLabels();
+    setupTabs();
+    setupNavigation();
+    setupQuickGrid();
+    setupDragDrop();
 
-  statusTimer =
-    setTimeout(
-      () => {
+    renderPieces();
+    renderTemplates();
 
-        saveStatus.textContent =
-          "저장됨";
+    setStatus("저장됨");
+  }
 
-      },
-      1800
-    );
-
-}
-
-
-/* =====================================================
-   INIT
-===================================================== */
-
-loadTemplates();
-
-
-canvas.width =
-  300;
-
-
-canvas.height =
-  150;
-
-
-totalCount.textContent =
-  "0개";
-
-
-selCount.textContent =
-  "0";
-
-
-sidebarProjectName.textContent =
-  state.workName;
-
-
-console.log(
-  "Iris PUBG Writer Vesper1.0 initialized."
-);
+  init();
+})();
